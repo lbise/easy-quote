@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues are tracked as local markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+Issues are tracked in GitHub Issues for `lbise/easy-quote`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
