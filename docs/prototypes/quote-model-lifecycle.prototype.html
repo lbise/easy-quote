@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PROTOTYPE — Easy Quote model and lifecycle</title>
+  <style>
+    :root { --ink:#24302b; --muted:#64706b; --paper:#fffdfa; --panel:#f4f1ea; --line:#d8d3c8; --accent:#166b53; --danger:#a13b2d; --ok:#246b42; }
+    * { box-sizing: border-box; }
+    body { margin:0; color:var(--ink); background:#eae6dd; font:15px/1.48 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    main { max-width:1180px; margin:0 auto; padding:28px 20px 64px; }
+    h1,h2,h3 { line-height:1.16; margin:0 0 12px; }
+    h1 { font-size:clamp(26px,4vw,42px); }
+    h2 { margin-top:28px; font-size:22px; }
+    h3 { font-size:16px; }
+    p { margin:8px 0; }
+    .eyebrow { color:var(--accent); font-weight:800; letter-spacing:.09em; text-transform:uppercase; font-size:12px; }
+    .intro,.panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:20px; box-shadow:0 2px 8px #5c554515; }
+    .assumptions { margin:14px 0 0; padding-left:20px; columns:2; column-gap:32px; }
+    .assumptions li { break-inside:avoid; margin:0 0 6px; }
+    .notice { margin:16px 0; padding:12px 14px; border-left:5px solid var(--accent); background:#eaf3ef; border-radius:6px; font-weight:650; }
+    .notice.error { border-color:var(--danger); background:#faece9; color:#70291f; }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:14px; }
+    .span-3 { grid-column:span 3; } .span-4 { grid-column:span 4; } .span-5 { grid-column:span 5; }
+    .span-6 { grid-column:span 6; } .span-7 { grid-column:span 7; } .span-8 { grid-column:span 8; } .span-12 { grid-column:span 12; }
+    .field { background:var(--panel); border-radius:8px; padding:11px 12px; min-height:68px; }
+    .label { display:block; color:var(--muted); font-size:12px; font-weight:750; text-transform:uppercase; letter-spacing:.04em; }
+    .value { display:block; margin-top:4px; font-weight:700; }
+    .badge { display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; font-weight:800; background:#ddece6; color:#12533f; }
+    .badge.draft { background:#fff0c9; color:#754f00; } .badge.closed { background:#e4e6e5; color:#515b57; }
+    table { width:100%; border-collapse:collapse; margin-top:8px; }
+    th,td { padding:9px 8px; border-bottom:1px solid var(--line); vertical-align:top; text-align:left; }
+    th { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+    td.money,th.money { text-align:right; white-space:nowrap; }
+    tr.muted td { color:var(--muted); }
+    .section-title { margin:18px 0 6px; color:var(--accent); }
+    .totals { margin-left:auto; max-width:430px; }
+    .totals tr:last-child { font-size:18px; font-weight:850; }
+    .history { margin:0; padding:0; list-style:none; }
+    .history li { padding:9px 0; border-bottom:1px solid var(--line); }
+    .history li:last-child { border:0; }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; }
+    button { appearance:none; border:1px solid #bcb6aa; border-radius:7px; background:var(--paper); color:var(--ink); padding:9px 12px; font:inherit; font-weight:700; cursor:pointer; }
+    button:hover { border-color:var(--accent); color:var(--accent); }
+    button.primary { background:var(--accent); border-color:var(--accent); color:white; }
+    .tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+    .tabs button.active { background:var(--ink); border-color:var(--ink); color:white; }
+    .walkthrough { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:18px; }
+    .steps { display:grid; gap:9px; margin-top:14px; }
+    .step { display:flex; align-items:center; gap:12px; padding:10px; background:var(--panel); border-radius:8px; }
+    .step.done { opacity:.55; }
+    .step.current { outline:2px solid var(--accent); }
+    .step-number { width:28px; height:28px; display:grid; place-items:center; border-radius:50%; background:var(--ink); color:white; font-weight:800; flex:none; }
+    .step button { margin-left:auto; min-width:150px; }
+    .empty { color:var(--muted); font-style:italic; padding:18px 0; }
+    details { margin-top:12px; }
+    summary { cursor:pointer; font-weight:750; }
+    code { background:#ebe7de; padding:2px 5px; border-radius:4px; }
+    @media (max-width:800px) { .assumptions { columns:1; } .span-3,.span-4,.span-5,.span-6,.span-7,.span-8 { grid-column:span 12; } table { font-size:13px; } th,td { padding:7px 4px; } .step { align-items:flex-start; flex-wrap:wrap; } .step button { width:100%; } }
+  </style>
+</head>
+<body>
+<main>
+  <section class="intro">
+    <div class="eyebrow">Throwaway logic prototype · not production</div>
+    <h1>What exactly is a Quote?</h1>
+    <p>This demo tests whether one canonical Quote model can represent the artisan examples while making draft numbering, finalization, duplication, explicit revisions, totals, options, exclusions, estimates, and VAT behaviour predictable.</p>
+    <p><strong>Proposed answer under test:</strong> a numbered Quote owns immutable revisions; each revision contains structured scope lines plus an explicit calculation; finalization freezes a revision, revision creates the next version of the same commercial offer, and duplication creates a new offer.</p>
+    <ul class="assumptions">
+      <li>A Quote number is reserved when its first draft is created.</li>
+      <li>Only drafts can change; finalization stores an immutable snapshot.</li>
+      <li>A revision keeps the Quote number and increments its revision number.</li>
+      <li>A duplicate gets a new Quote number and starts at revision 1.</li>
+      <li>Price basis is explicit: fixed, approximate estimate, or time and materials.</li>
+      <li>Optional/excluded lines never silently enter the payable total.</li>
+      <li>Inclusion, certainty, work performer, and material supplier are independent line attributes.</li>
+      <li>Rich technical details and reference images belong to a scope line without changing its price shape.</li>
+      <li>Discounts and levies are named, ordered adjustments with an explicit pre- or post-VAT stage.</li>
+      <li>The MVP uses one currency and one VAT treatment/rate per Quote.</li>
+      <li>Finalized PDFs display Customer, project, business, and VAT snapshots captured at that moment.</li>
+      <li>Accepted, declined, expired, or cancelled outcomes name the finalized revision they concern.</li>
+      <li>Acceptance or cancellation ends the Quote; decline or expiry can reopen only through an explicit revision.</li>
+    </ul>
+  </section>
+
+  <div id="notice" class="notice">Loaded a representative fixed-price draft. Try the walkthroughs or any free-play action.</div>
+
+  <h2>Current state</h2>
+  <section id="state" class="panel"></section>
+
+  <h2>Free play</h2>
+  <section class="panel">
+    <p>Buttons stay available deliberately. Invalid actions should explain why they were refused rather than silently changing evidence.</p>
+    <div id="free-play" class="controls"></div>
+  </section>
+
+  <h2>Guided walkthroughs</h2>
+  <div id="tabs" class="tabs"></div>
+  <section id="walkthrough" class="walkthrough"></section>
+</main>
+
+<script>
+// QUOTE MODEL PROTOTYPE — pure domain module. It knows nothing about this page.
+const QuoteModel = (() => {
+  const clone = value => structuredClone(value);
+  const money = value => Math.round(value);
+  const now = () => new Date().toISOString().slice(0, 10);
+
+  const line = (id, description, quantity, unit, unitPrice, attributes = {}) => ({
+    id, description,
+    quantity: typeof quantity === "number" ? { kind: "numeric", value: quantity } : { kind: "text", value: quantity },
+    unit: unit || null,
+    unitPrice: unitPrice == null ? null : money(unitPrice),
+    amountOverride: attributes.amountOverride == null ? null : money(attributes.amountOverride),
+    inclusion: attributes.inclusion || "priced",
+    performedBy: attributes.performedBy || "artisan",
+    materialsSuppliedBy: attributes.materialsSuppliedBy || "artisan",
+    certainty: attributes.certainty || "fixed",
+    details: attributes.details || [],
+    references: attributes.references || [],
+    note: attributes.note || null
+  });
+
+  const fixedDraft = (number = "EQ-2026-0042", customer = "Camille Martin") => ({
+    quoteId: crypto.randomUUID(), number, customer: { name: customer, address: "Rue Exemple 8, 1000 Lausanne" },
+    project: { title: "Interior carpentry renovation", location: "Project address on file", owner:"Same as Customer" },
+    language: "fr", currency: "CHF", priceBasis: "fixed", outcome: { status:"open", revisionNumber:null, recordedAt:null }, sourceQuote: null,
+    businessSnapshot: { name: "Atelier Exemple Sàrl", vatStatus: "registered", vatNumber: "CHE-000.000.000 TVA" },
+    revision: {
+      number: 1, status: "draft", quoteDate: now(), validUntil: "2026-09-30", finalizedAt: null,
+      sections: [
+        { id:"ground", title:"Ground-floor scope", lines:[
+          line("ceiling", "Cross-battened ceiling structure", 55, "m²", 7100, { details:["Timber battens, fixings, setting out, and installation"], references:["ceiling-detail.jpg"] }),
+          line("panels", "Install customer-supplied panels", 24, "h", 8100, { performedBy:"artisan", materialsSuppliedBy:"customer", note:"Panels supplied by Customer; installation by Artisan Business." }),
+          line("repair", "Repair structural members", 1, "package", null, { amountOverride:152000, certainty:"estimated" })
+        ]},
+        { id:"floor", title:"Flooring", lines:[
+          line("parquet", "Lay parquet, excluding perimeter border", 72, "m²", 5900),
+          line("border", "Optional perimeter border", 18, "m", 2400, { inclusion:"optional" }),
+          line("cleanup", "Routine site cleanup", 1, "package", 0, { inclusion:"included" }),
+          line("remove", "Remove existing floor covering", 1, "package", 0, { inclusion:"excluded", performedBy:"customer", materialsSuppliedBy:"not_applicable" })
+        ]}
+      ],
+      adjustments: [], vat: { mode:"added", rateBasisPoints:810 }, terms: { payment:"30 days net", acceptance:"Written confirmation", notes:"Additional requested work is quoted separately." }
+    },
+    finalizedRevisions: [], history:[{ date:now(), event:"Quote draft created and number reserved" }]
+  });
+
+  const estimateDraft = () => {
+    const state = fixedDraft("EQ-2026-0043", "Alex Bernard");
+    state.project = { title:"Plastering and painting renovation", location:"Customer property", owner:"Property owner differs from Customer" };
+    state.priceBasis = "approximate_estimate";
+    state.revision.sections = [
+      { id:"ground", title:"Ground floor", lines:[
+        line("protect", "Protect floors and joinery", 1, "package", 36000),
+        line("ceiling", "Prepare and paint ceilings", 1, "package", 985000),
+        line("cutouts", "Small service cut-outs", "as required", "item", 1500, { inclusion:"optional", certainty:"estimated" }),
+        line("wallpaper", "Remove existing wallpaper", 1, "package", 0, { inclusion:"excluded", performedBy:"customer", materialsSuppliedBy:"not_applicable" })
+      ]},
+      { id:"upper", title:"Upper floor", lines:[
+        line("making-good", "Making good after other trades", 22, "h", 8100, { certainty:"estimated", performedBy:"artisan", materialsSuppliedBy:"artisan", note:"Quantity depends on completion by another trade." })
+      ]}
+    ];
+    state.revision.adjustments = [
+      { id:"discount", label:"Prompt-payment discount", kind:"percent", basisPoints:-200, stage:"pre_vat" },
+      { id:"levy", label:"Waste / industry levy", kind:"percent", basisPoints:150, stage:"pre_vat" }
+    ];
+    state.revision.terms.notes = "Quantities marked estimated are reconciled against actual work. Options require explicit selection.";
+    return state;
+  };
+
+  const nonVatDraft = () => {
+    const state = fixedDraft("EQ-2026-0044", "Morgan Dubois");
+    state.businessSnapshot = { name:"Menuiserie Exemple", vatStatus:"not_registered", vatNumber:null };
+    state.revision.vat = { mode:"not_applicable", rateBasisPoints:0 };
+    state.history.push({ date:now(), event:"VAT display disabled because the Artisan Business is not VAT registered" });
+    return state;
+  };
+
+  const lineAmount = item => {
+    if (item.inclusion !== "priced") return 0;
+    if (item.amountOverride != null) return item.amountOverride;
+    if (item.quantity.kind !== "numeric" || item.unitPrice == null) return 0;
+    return money(item.quantity.value * item.unitPrice);
+  };
+
+  const calculate = revision => {
+    const sectionTotals = revision.sections.map(section => ({ id:section.id, total:section.lines.reduce((sum,item) => sum + lineAmount(item), 0) }));
+    const workSubtotal = sectionTotals.reduce((sum,section) => sum + section.total, 0);
+    const applyAdjustments = (items, startingAmount) => {
+      let running = startingAmount;
+      const applied = items.map(adjustment => {
+        const amount = adjustment.kind === "percent" ? money(running * adjustment.basisPoints / 10000) : adjustment.amount;
+        running += amount;
+        return { ...adjustment, amount, resultingSubtotal:running };
+      });
+      return { applied, result:running };
+    };
+    const preVat = applyAdjustments(revision.adjustments.filter(item => item.stage === "pre_vat"), workSubtotal);
+    const vat = revision.vat.mode === "added" ? money(preVat.result * revision.vat.rateBasisPoints / 10000) : 0;
+    const postVat = applyAdjustments(revision.adjustments.filter(item => item.stage === "post_vat"), preVat.result + vat);
+    return { sectionTotals, workSubtotal, preVatAdjustments:preVat.applied, vatBasis:preVat.result, vat, postVatAdjustments:postVat.applied, total:postVat.result };
+  };
+
+  const assertDraft = state => {
+    if (state.revision.status !== "draft") throw new Error("This revision is finalized and immutable. Start an explicit revision before changing commercial content.");
+  };
+
+  const reduce = (original, action) => {
+    let state = clone(original);
+    switch (action.type) {
+      case "LOAD_FIXED": return fixedDraft();
+      case "LOAD_ESTIMATE": return estimateDraft();
+      case "LOAD_NON_VAT": return nonVatDraft();
+      case "ADD_OPTION": {
+        assertDraft(state);
+        state.revision.sections[0].lines.push(line(`option-${state.revision.sections[0].lines.length}`, "Optional upgrade in premium material", 1, "item", 65000, { inclusion:"optional" }));
+        state.history.push({ date:now(), event:"Optional line added; payable total unchanged" });
+        return state;
+      }
+      case "ADD_EXCLUSION": {
+        assertDraft(state);
+        state.revision.sections[0].lines.push(line(`excluded-${state.revision.sections[0].lines.length}`, "Site clearing by Customer", 1, "package", 0, { inclusion:"excluded", performedBy:"customer", materialsSuppliedBy:"not_applicable" }));
+        state.history.push({ date:now(), event:"Customer responsibility recorded as an exclusion" });
+        return state;
+      }
+      case "APPLY_DISCOUNT": {
+        assertDraft(state);
+        if (state.revision.adjustments.some(item => item.id === "negotiated-discount")) throw new Error("The negotiated discount is already explicit in this revision.");
+        state.revision.adjustments.unshift({ id:"negotiated-discount", label:"Negotiated discount", kind:"percent", basisPoints:-300, stage:"pre_vat" });
+        state.history.push({ date:now(), event:"3% negotiated discount added before VAT" });
+        return state;
+      }
+      case "APPLY_POST_VAT_DISCOUNT": {
+        assertDraft(state);
+        if (state.revision.adjustments.some(item => item.id === "post-vat-discount")) throw new Error("The post-VAT discount is already explicit in this revision.");
+        state.revision.adjustments.push({ id:"post-vat-discount", label:"Negotiated discount on VAT-inclusive total", kind:"percent", basisPoints:-300, stage:"post_vat" });
+        state.history.push({ date:now(), event:"3% negotiated discount added after VAT; the unusual basis remains explicit" });
+        return state;
+      }
+      case "APPLY_LEVY": {
+        assertDraft(state);
+        if (state.revision.adjustments.some(item => item.id === "industry-levy")) throw new Error("The industry levy is already explicit in this revision.");
+        state.revision.adjustments.push({ id:"industry-levy", label:"Industry levy", kind:"percent", basisPoints:150, stage:"pre_vat" });
+        state.history.push({ date:now(), event:"1.5% industry levy added after prior adjustments and before VAT" });
+        return state;
+      }
+      case "EDIT_FIRST_PRICE": {
+        assertDraft(state);
+        const first = state.revision.sections[0].lines.find(item => item.inclusion === "priced");
+        if (first.unitPrice != null) first.unitPrice += 500;
+        else first.amountOverride += 50000;
+        state.history.push({ date:now(), event:"First priced line updated in the draft" });
+        return state;
+      }
+      case "FINALIZE": {
+        assertDraft(state);
+        const calc = calculate(state.revision);
+        if (!state.customer.name || !state.project.title || calc.total <= 0) throw new Error("Customer, project title, and a positive total are required before finalization.");
+        state.revision.status = "finalized";
+        state.revision.finalizedAt = new Date().toISOString();
+        state.finalizedRevisions.push(clone({
+          revision:state.revision, customer:state.customer, project:state.project,
+          language:state.language, priceBasis:state.priceBasis,
+          businessSnapshot:state.businessSnapshot, calculatedTotal:calc.total
+        }));
+        state.history.push({ date:now(), event:`Revision ${state.revision.number} finalized; its complete commercial snapshot and Quote PDF are now immutable` });
+        return state;
+      }
+      case "START_REVISION": {
+        if (state.revision.status !== "finalized") throw new Error("Finalize the current draft before starting another revision.");
+        if (["accepted", "cancelled"].includes(state.outcome.status)) throw new Error(`A ${state.outcome.status} Quote is closed. Create a new Quote rather than changing the accepted or withdrawn offer.`);
+        const priorOutcome = state.outcome.status;
+        state.revision = clone(state.revision);
+        state.revision.number += 1;
+        state.revision.status = "draft";
+        state.revision.finalizedAt = null;
+        state.revision.quoteDate = now();
+        state.outcome = { status:"open", revisionNumber:null, recordedAt:null };
+        state.history.push({ date:now(), event:`Revision ${state.revision.number} draft created from the last finalized revision${priorOutcome === "open" ? "" : ` after revision ${state.revision.number - 1} was ${priorOutcome}`}` });
+        return state;
+      }
+      case "DUPLICATE": {
+        const source = state.number;
+        const latest = clone(state.revision);
+        state = {
+          ...state,
+          quoteId:crypto.randomUUID(), number:"EQ-2026-0099", customer:{ name:"New Customer", address:"New address required" },
+          sourceQuote:source, outcome:{ status:"open", revisionNumber:null, recordedAt:null }, finalizedRevisions:[],
+          revision:{ ...latest, number:1, status:"draft", quoteDate:now(), validUntil:"2026-10-31", finalizedAt:null },
+          history:[{ date:now(), event:`New Quote duplicated from ${source}; new number reserved and prior evidence detached` }]
+        };
+        return state;
+      }
+      case "CHANGE_CUSTOMER": {
+        if (state.finalizedRevisions.length) throw new Error("A finalized Quote cannot be moved to another Customer. Duplicate it so the new offer receives its own number.");
+        assertDraft(state);
+        state.customer = { name:"Changed Customer", address:"Changed address" };
+        state.history.push({ date:now(), event:"Customer changed before first finalization" });
+        return state;
+      }
+      case "MARK_ACCEPTED": return recordOutcome(state, "accepted");
+      case "MARK_DECLINED": return recordOutcome(state, "declined");
+      case "MARK_EXPIRED": return recordOutcome(state, "expired");
+      case "CANCEL_QUOTE": return recordOutcome(state, "cancelled");
+      default: throw new Error(`Unknown action: ${action.type}`);
+    }
+  };
+
+  const recordOutcome = (state, status) => {
+    if (state.revision.status !== "finalized") throw new Error("An outcome can name only a finalized revision.");
+    if (state.outcome.status !== "open") throw new Error(`This Quote already records revision ${state.outcome.revisionNumber} as ${state.outcome.status}.`);
+    state.outcome = { status, revisionNumber:state.revision.number, recordedAt:now() };
+    state.history.push({ date:now(), event:`Revision ${state.revision.number} recorded as ${status}` });
+    return state;
+  };
+
+  return { fixedDraft, estimateDraft, nonVatDraft, calculate, lineAmount, reduce };
+})();
+</script>
+
+<script>
+// Throwaway page shell. It calls the pure model above.
+const actions = [
+  ["LOAD_FIXED","Load fixed-price carpenter draft"], ["LOAD_ESTIMATE","Load approximate-estimate example"], ["LOAD_NON_VAT","Load non-VAT business example"],
+  ["ADD_OPTION","Add optional work"], ["ADD_EXCLUSION","Add Customer responsibility"], ["APPLY_DISCOUNT","Apply 3% pre-VAT discount"],
+  ["APPLY_POST_VAT_DISCOUNT","Apply 3% discount after VAT"], ["APPLY_LEVY","Apply 1.5% levy"], ["EDIT_FIRST_PRICE","Edit first price"], ["FINALIZE","Finalize current revision"],
+  ["START_REVISION","Start explicit revision"], ["DUPLICATE","Duplicate as new Quote"], ["CHANGE_CUSTOMER","Change Customer"],
+  ["MARK_ACCEPTED","Record acceptance"], ["MARK_DECLINED","Record decline"], ["MARK_EXPIRED","Record expiry"], ["CANCEL_QUOTE","Cancel Quote"]
+];
+const walkthroughs = [
+  {
+    name:"Finalize and revise",
+    description:"Watch a numbered draft become immutable. An attempted direct edit is refused; an explicit revision preserves the earlier finalized source and PDF.",
+    start:"LOAD_FIXED",
+    steps:[["FINALIZE","Freeze revision 1"],["EDIT_FIRST_PRICE","Try to edit the finalized price"],["START_REVISION","Create revision 2 draft"],["EDIT_FIRST_PRICE","Change price in revision 2"],["FINALIZE","Freeze revision 2"]]
+  },
+  {
+    name:"Estimate, options, and totals",
+    description:"Inspect orthogonal line attributes and ordered calculations. Options and exclusions remain visible but outside the payable total; discount and levy change the VAT basis in sequence.",
+    start:"LOAD_ESTIMATE",
+    steps:[["ADD_OPTION","Add another option"],["ADD_EXCLUSION","Add a Customer responsibility"],["APPLY_DISCOUNT","Add negotiated discount"],["APPLY_LEVY","Add industry levy"],["FINALIZE","Finalize the estimate"]]
+  },
+  {
+    name:"Revision versus duplicate",
+    description:"A revision changes the same offer and keeps its number. A duplicate creates a distinct offer, Customer, number, history, and revision sequence.",
+    start:"LOAD_FIXED",
+    steps:[["FINALIZE","Finalize the source Quote"],["CHANGE_CUSTOMER","Try moving it to another Customer"],["DUPLICATE","Duplicate into a new Quote"],["EDIT_FIRST_PRICE","Tailor the new draft"],["FINALIZE","Finalize the independent Quote"]]
+  },
+  {
+    name:"Adjustment basis",
+    description:"The corpus contains both ordinary pre-VAT adjustments and a handwritten discount on a VAT-inclusive total. The stage is explicit so the canonical model preserves rather than silently normalizes the commercial math.",
+    start:"LOAD_FIXED",
+    steps:[["APPLY_DISCOUNT","Apply an ordinary pre-VAT discount"],["APPLY_POST_VAT_DISCOUNT","Add the unusual VAT-inclusive discount"],["FINALIZE","Freeze the exact calculation"]]
+  },
+  {
+    name:"Outcome belongs to a revision",
+    description:"A Customer outcome names the exact finalized revision. Acceptance closes the offer; decline or expiry may be followed only by an explicit revision, which reopens the Quote.",
+    start:"LOAD_FIXED",
+    steps:[["FINALIZE","Finalize revision 1"],["MARK_DECLINED","Record that revision 1 was declined"],["START_REVISION","Reopen through revision 2"],["EDIT_FIRST_PRICE","Change the revised offer"],["FINALIZE","Finalize revision 2"],["MARK_ACCEPTED","Record acceptance of revision 2"],["START_REVISION","Try revising an accepted Quote"]]
+  },
+  {
+    name:"VAT guardrail",
+    description:"A non-VAT-registered Artisan Business has no VAT line or VAT number. Finalization preserves that issuer snapshot rather than relying on later onboarding changes.",
+    start:"LOAD_NON_VAT",
+    steps:[["APPLY_DISCOUNT","Apply a commercial discount"],["FINALIZE","Finalize without VAT"],["START_REVISION","Create another revision"],["EDIT_FIRST_PRICE","Change a price"],["FINALIZE","Finalize the revised Quote"]]
+  }
+];
+let state = QuoteModel.fixedDraft();
+let activeWalkthrough = 0;
+let activeStep = 0;
+
+const francs = rappen => new Intl.NumberFormat("fr-CH", { style:"currency", currency:"CHF" }).format(rappen / 100);
+const text = value => String(value).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[char]));
+const phrase = value => ({ fixed:"Fixed price", approximate_estimate:"Approximate estimate", time_and_materials:"Time and materials", priced:"In total", included:"Included at no separate charge", optional:"Optional", excluded:"Excluded", artisan:"Artisan Business", customer:"Customer", estimated:"Estimated", registered:"VAT registered", not_registered:"Not VAT registered", added:"Added", not_applicable:"Not applicable" }[value] || value.replaceAll("_"," "));
+const quantity = item => item.quantity.kind === "numeric" ? item.quantity.value : text(item.quantity.value);
+const lineAmount = item => item.inclusion === "priced" ? francs(QuoteModel.lineAmount(item)) : "—";
+
+function render() {
+  const calc = QuoteModel.calculate(state.revision);
+  const sectionHtml = state.revision.sections.map(section => `
+    <h3 class="section-title">${text(section.title)} · ${francs(calc.sectionTotals.find(value => value.id === section.id).total)}</h3>
+    <table><thead><tr><th>Description</th><th>Commercial treatment</th><th>Work / materials / certainty</th><th>Quantity</th><th class="money">Unit price</th><th class="money">Amount</th></tr></thead><tbody>
+    ${section.lines.map(item => `<tr class="${item.inclusion === "priced" ? "" : "muted"}">
+      <td><strong>${text(item.description)}</strong>${item.details.map(detail => `<br><small>• ${text(detail)}</small>`).join("")}${item.references.map(reference => `<br><small>Reference: ${text(reference)}</small>`).join("")}${item.note ? `<br><small>${text(item.note)}</small>`:""}</td>
+      <td><span class="badge">${text(phrase(item.inclusion))}</span></td>
+      <td>Work: ${text(phrase(item.performedBy))}<br><small>Materials: ${text(phrase(item.materialsSuppliedBy))} · ${text(phrase(item.certainty))}</small></td>
+      <td>${quantity(item)} ${text(item.unit || "")}</td>
+      <td class="money">${item.unitPrice == null ? "—" : francs(item.unitPrice)}</td>
+      <td class="money">${lineAmount(item)}</td>
+    </tr>`).join("")}
+    </tbody></table>`).join("");
+  const preVatAdjustments = calc.preVatAdjustments.map(item => `<tr><td>${text(item.label)} (${item.basisPoints / 100}%, before VAT)</td><td class="money">${francs(item.amount)}</td></tr>`).join("");
+  const postVatAdjustments = calc.postVatAdjustments.map(item => `<tr><td>${text(item.label)} (${item.basisPoints / 100}%, after VAT)</td><td class="money">${francs(item.amount)}</td></tr>`).join("");
+  const snapshots = state.finalizedRevisions.length ? state.finalizedRevisions.map(snapshot => `<li><strong>Revision ${snapshot.revision.number}</strong> — finalized ${text(snapshot.revision.finalizedAt.slice(0,10))}; ${text(snapshot.customer.name)}, ${text(snapshot.businessSnapshot.name)}, ${francs(snapshot.calculatedTotal)}; immutable source and Quote PDF retained</li>`).join("") : `<li class="empty">No finalized revision yet.</li>`;
+  document.querySelector("#state").innerHTML = `
+    <div class="grid">
+      <div class="field span-3"><span class="label">Quote</span><span class="value">${text(state.number)} · revision ${state.revision.number}</span></div>
+      <div class="field span-3"><span class="label">Revision state</span><span class="value"><span class="badge ${state.revision.status === "draft" ? "draft":"closed"}">${text(state.revision.status)}</span></span></div>
+      <div class="field span-3"><span class="label">Customer outcome</span><span class="value">${text(state.outcome.status)}${state.outcome.revisionNumber ? ` · revision ${state.outcome.revisionNumber}`:""}</span></div>
+      <div class="field span-3"><span class="label">Price basis</span><span class="value">${text(phrase(state.priceBasis))}</span></div>
+      <div class="field span-4"><span class="label">Customer</span><span class="value">${text(state.customer.name)}</span><small>${text(state.customer.address)}</small></div>
+      <div class="field span-4"><span class="label">Project</span><span class="value">${text(state.project.title)}</span><small>${text(state.project.location)} · Owner: ${text(state.project.owner)}</small></div>
+      <div class="field span-4"><span class="label">Artisan Business snapshot</span><span class="value">${text(state.businessSnapshot.name)}</span><small>${text(phrase(state.businessSnapshot.vatStatus))}${state.businessSnapshot.vatNumber ? ` · ${text(state.businessSnapshot.vatNumber)}`:""}</small></div>
+      <div class="field span-3"><span class="label">Quote date</span><span class="value">${text(state.revision.quoteDate)}</span></div>
+      <div class="field span-3"><span class="label">Valid until</span><span class="value">${text(state.revision.validUntil)}</span></div>
+      <div class="field span-3"><span class="label">Output language</span><span class="value">${text(state.language.toUpperCase())}</span></div>
+      <div class="field span-3"><span class="label">Created from</span><span class="value">${text(state.sourceQuote || "New Quote")}</span></div>
+    </div>
+    ${sectionHtml}
+    <table class="totals"><tbody>
+      <tr><td>Priced work subtotal</td><td class="money">${francs(calc.workSubtotal)}</td></tr>
+      ${preVatAdjustments}
+      <tr><td>VAT basis</td><td class="money">${francs(calc.vatBasis)}</td></tr>
+      <tr><td>VAT ${state.revision.vat.mode === "added" ? `${state.revision.vat.rateBasisPoints / 100}%` : "not applicable"}</td><td class="money">${francs(calc.vat)}</td></tr>
+      ${postVatAdjustments}
+      <tr><td>${state.priceBasis === "fixed" ? "Payable total" : "Indicative total"}</td><td class="money">${francs(calc.total)}</td></tr>
+    </tbody></table>
+    <div class="grid">
+      <div class="span-6"><h3>Finalized evidence</h3><ul class="history">${snapshots}</ul></div>
+      <div class="span-6"><h3>History</h3><ul class="history">${state.history.slice().reverse().map(item => `<li><strong>${text(item.date)}</strong> — ${text(item.event)}</li>`).join("")}</ul></div>
+    </div>
+    <details><summary>Commercial terms captured in this revision</summary><p><strong>Payment:</strong> ${text(state.revision.terms.payment)}<br><strong>Acceptance:</strong> ${text(state.revision.terms.acceptance)}<br><strong>Notes:</strong> ${text(state.revision.terms.notes)}</p></details>`;
+}
+
+function dispatch(type, fromWalkthrough = false) {
+  try {
+    state = QuoteModel.reduce(state, { type });
+    const action = actions.find(item => item[0] === type);
+    showNotice(`${action ? action[1] : type}: state changed as shown below.`, false);
+  } catch (error) {
+    showNotice(`Refused: ${error.message}`, true);
+  }
+  if (fromWalkthrough) activeStep += 1;
+  render(); renderWalkthrough();
+}
+function showNotice(message, error) {
+  const notice = document.querySelector("#notice");
+  notice.textContent = message; notice.classList.toggle("error", error);
+}
+function renderFreePlay() {
+  document.querySelector("#free-play").innerHTML = actions.map(([type,label], index) => `<button class="${index < 3 ? "primary":""}" data-action="${type}">${text(label)}</button>`).join("");
+  document.querySelectorAll("#free-play button").forEach(button => button.addEventListener("click", () => dispatch(button.dataset.action)));
+}
+function startWalkthrough(index) {
+  activeWalkthrough = index; activeStep = 0;
+  state = QuoteModel.reduce(state, { type:walkthroughs[index].start });
+  showNotice(`Walkthrough started: ${walkthroughs[index].name}.`, false);
+  render(); renderTabs(); renderWalkthrough();
+}
+function renderTabs() {
+  document.querySelector("#tabs").innerHTML = walkthroughs.map((item,index) => `<button class="${index === activeWalkthrough ? "active":""}" data-tab="${index}">${text(item.name)}</button>`).join("");
+  document.querySelectorAll("#tabs button").forEach(button => button.addEventListener("click", () => startWalkthrough(Number(button.dataset.tab))));
+}
+function renderWalkthrough() {
+  const item = walkthroughs[activeWalkthrough];
+  document.querySelector("#walkthrough").innerHTML = `<h3>${text(item.name)}</h3><p>${text(item.description)}</p><button data-restart>Restart this walkthrough</button><div class="steps">
+    ${item.steps.map(([type,label],index) => `<div class="step ${index < activeStep ? "done":index === activeStep ? "current":""}"><span class="step-number">${index+1}</span><span>${text(label)}</span><button ${index !== activeStep ? "disabled":""} data-step="${type}">${index < activeStep ? "Done":index === activeStep ? "Do this":"Waiting"}</button></div>`).join("")}
+  </div>${activeStep >= item.steps.length ? `<p class="notice">Walkthrough complete. Does this behaviour match the way the Artisan should understand a Quote?</p>`:""}`;
+  document.querySelector("[data-restart]").addEventListener("click", () => startWalkthrough(activeWalkthrough));
+  const current = document.querySelector("[data-step]:not([disabled])");
+  if (current) current.addEventListener("click", () => dispatch(current.dataset.step, true));
+}
+
+renderFreePlay(); renderTabs(); renderWalkthrough(); render();
+</script>
+</body>
+</html>
