@@ -64,22 +64,23 @@
   <section class="intro">
     <div class="eyebrow">Throwaway logic prototype · not production</div>
     <h1>What exactly is a Quote?</h1>
-    <p>This demo tests whether one canonical Quote model can represent the artisan examples while making draft numbering, finalization, duplication, explicit revisions, totals, options, exclusions, estimates, and VAT behaviour predictable.</p>
-    <p><strong>Proposed answer under test:</strong> a numbered Quote owns immutable revisions; each revision contains structured scope lines plus an explicit calculation; finalization freezes a revision, revision creates the next version of the same commercial offer, and duplication creates a new offer.</p>
+    <p>This demo tests whether one canonical Quote model can represent the artisan examples while keeping publishing, duplication, explicit revisions, totals, options, exclusions, estimates, and VAT behaviour predictable without locking the Artisan’s work.</p>
+    <p><strong>Proposed answer under test:</strong> a numbered Quote is always editable. The Artisan explicitly publishes its current contents as a preserved revision and Quote PDF. Later edits become unpublished changes; publishing again preserves the next revision. Duplication creates a new offer.</p>
     <ul class="assumptions">
       <li>A Quote number is reserved when its first draft is created.</li>
-      <li>Only drafts can change; finalization stores an immutable snapshot.</li>
-      <li>A revision keeps the Quote number and increments its revision number.</li>
-      <li>A duplicate gets a new Quote number and starts at revision 1.</li>
+      <li>The working Quote always remains editable.</li>
+      <li><strong>Publish Quote</strong> preserves revision 1; later <strong>Publish revision</strong> actions preserve revisions 2, 3, and so on.</li>
+      <li>Publishing without changes reuses the latest revision rather than creating a duplicate.</li>
+      <li>Every published Quote PDF shows its revision number.</li>
+      <li>Publishing implies the revision was prepared for sharing; sharing and Customer outcomes are not tracked.</li>
+      <li>A duplicate copies the visible working Quote into a new number but carries no revision history.</li>
       <li>Price basis is explicit: fixed, approximate estimate, or time and materials.</li>
       <li>Optional/excluded lines never silently enter the payable total.</li>
       <li>Inclusion, certainty, work performer, and material supplier are independent line attributes.</li>
       <li>Rich technical details and reference images belong to a scope line without changing its price shape.</li>
       <li>Discounts and levies are named, ordered adjustments with an explicit pre- or post-VAT stage.</li>
       <li>The MVP uses one currency and one VAT treatment/rate per Quote.</li>
-      <li>Finalized PDFs display Customer, project, business, and VAT snapshots captured at that moment.</li>
-      <li>Accepted, declined, expired, or cancelled outcomes name the finalized revision they concern.</li>
-      <li>Acceptance or cancellation ends the Quote; decline or expiry can reopen only through an explicit revision.</li>
+      <li>Published revisions preserve Customer, project, business, commercial terms, calculations, and VAT as they were at publication.</li>
     </ul>
   </section>
 
@@ -124,10 +125,10 @@ const QuoteModel = (() => {
   const fixedDraft = (number = "EQ-2026-0042", customer = "Camille Martin") => ({
     quoteId: crypto.randomUUID(), number, customer: { name: customer, address: "Rue Exemple 8, 1000 Lausanne" },
     project: { title: "Interior carpentry renovation", location: "Project address on file", owner:"Same as Customer" },
-    language: "fr", currency: "CHF", priceBasis: "fixed", outcome: { status:"open", revisionNumber:null, recordedAt:null }, sourceQuote: null,
+    language: "fr", currency: "CHF", priceBasis: "fixed", sourceQuote: null,
     businessSnapshot: { name: "Atelier Exemple Sàrl", vatStatus: "registered", vatNumber: "CHE-000.000.000 TVA" },
-    revision: {
-      number: 1, status: "draft", quoteDate: now(), validUntil: "2026-09-30", finalizedAt: null,
+    working: {
+      quoteDate: now(), validUntil: "2026-09-30",
       sections: [
         { id:"ground", title:"Ground-floor scope", lines:[
           line("ceiling", "Cross-battened ceiling structure", 55, "m²", 7100, { details:["Timber battens, fixings, setting out, and installation"], references:["ceiling-detail.jpg"] }),
@@ -143,14 +144,15 @@ const QuoteModel = (() => {
       ],
       adjustments: [], vat: { mode:"added", rateBasisPoints:810 }, terms: { payment:"30 days net", acceptance:"Written confirmation", notes:"Additional requested work is quoted separately." }
     },
-    finalizedRevisions: [], history:[{ date:now(), event:"Quote draft created and number reserved" }]
+    publishedRevisions: [], changeCounter:0, lastPublishedChangeCounter:null,
+    history:[{ date:now(), event:"Quote draft created and number reserved" }]
   });
 
   const estimateDraft = () => {
     const state = fixedDraft("EQ-2026-0043", "Alex Bernard");
     state.project = { title:"Plastering and painting renovation", location:"Customer property", owner:"Property owner differs from Customer" };
     state.priceBasis = "approximate_estimate";
-    state.revision.sections = [
+    state.working.sections = [
       { id:"ground", title:"Ground floor", lines:[
         line("protect", "Protect floors and joinery", 1, "package", 36000),
         line("ceiling", "Prepare and paint ceilings", 1, "package", 985000),
@@ -161,18 +163,18 @@ const QuoteModel = (() => {
         line("making-good", "Making good after other trades", 22, "h", 8100, { certainty:"estimated", performedBy:"artisan", materialsSuppliedBy:"artisan", note:"Quantity depends on completion by another trade." })
       ]}
     ];
-    state.revision.adjustments = [
+    state.working.adjustments = [
       { id:"discount", label:"Prompt-payment discount", kind:"percent", basisPoints:-200, stage:"pre_vat" },
       { id:"levy", label:"Waste / industry levy", kind:"percent", basisPoints:150, stage:"pre_vat" }
     ];
-    state.revision.terms.notes = "Quantities marked estimated are reconciled against actual work. Options require explicit selection.";
+    state.working.terms.notes = "Quantities marked estimated are reconciled against actual work. Options require explicit selection.";
     return state;
   };
 
   const nonVatDraft = () => {
     const state = fixedDraft("EQ-2026-0044", "Morgan Dubois");
     state.businessSnapshot = { name:"Menuiserie Exemple", vatStatus:"not_registered", vatNumber:null };
-    state.revision.vat = { mode:"not_applicable", rateBasisPoints:0 };
+    state.working.vat = { mode:"not_applicable", rateBasisPoints:0 };
     state.history.push({ date:now(), event:"VAT display disabled because the Artisan Business is not VAT registered" });
     return state;
   };
@@ -202,8 +204,10 @@ const QuoteModel = (() => {
     return { sectionTotals, workSubtotal, preVatAdjustments:preVat.applied, vatBasis:preVat.result, vat, postVatAdjustments:postVat.applied, total:postVat.result };
   };
 
-  const assertDraft = state => {
-    if (state.revision.status !== "draft") throw new Error("This revision is finalized and immutable. Start an explicit revision before changing commercial content.");
+  const markChanged = (state, event) => {
+    state.changeCounter += 1;
+    state.history.push({ date:now(), event });
+    return state;
   };
 
   const reduce = (original, action) => {
@@ -213,106 +217,71 @@ const QuoteModel = (() => {
       case "LOAD_ESTIMATE": return estimateDraft();
       case "LOAD_NON_VAT": return nonVatDraft();
       case "ADD_OPTION": {
-        assertDraft(state);
-        state.revision.sections[0].lines.push(line(`option-${state.revision.sections[0].lines.length}`, "Optional upgrade in premium material", 1, "item", 65000, { inclusion:"optional" }));
-        state.history.push({ date:now(), event:"Optional line added; payable total unchanged" });
-        return state;
+        state.working.sections[0].lines.push(line(`option-${state.working.sections[0].lines.length}`, "Optional upgrade in premium material", 1, "item", 65000, { inclusion:"optional" }));
+        return markChanged(state, "Optional line added; payable total unchanged");
       }
       case "ADD_EXCLUSION": {
-        assertDraft(state);
-        state.revision.sections[0].lines.push(line(`excluded-${state.revision.sections[0].lines.length}`, "Site clearing by Customer", 1, "package", 0, { inclusion:"excluded", performedBy:"customer", materialsSuppliedBy:"not_applicable" }));
-        state.history.push({ date:now(), event:"Customer responsibility recorded as an exclusion" });
-        return state;
+        state.working.sections[0].lines.push(line(`excluded-${state.working.sections[0].lines.length}`, "Site clearing by Customer", 1, "package", 0, { inclusion:"excluded", performedBy:"customer", materialsSuppliedBy:"not_applicable" }));
+        return markChanged(state, "Customer responsibility recorded as an exclusion");
       }
       case "APPLY_DISCOUNT": {
-        assertDraft(state);
-        if (state.revision.adjustments.some(item => item.id === "negotiated-discount")) throw new Error("The negotiated discount is already explicit in this revision.");
-        state.revision.adjustments.unshift({ id:"negotiated-discount", label:"Negotiated discount", kind:"percent", basisPoints:-300, stage:"pre_vat" });
-        state.history.push({ date:now(), event:"3% negotiated discount added before VAT" });
-        return state;
+        if (state.working.adjustments.some(item => item.id === "negotiated-discount")) throw new Error("The negotiated discount is already explicit in the working Quote.");
+        state.working.adjustments.unshift({ id:"negotiated-discount", label:"Negotiated discount", kind:"percent", basisPoints:-300, stage:"pre_vat" });
+        return markChanged(state, "3% negotiated discount added before VAT");
       }
       case "APPLY_POST_VAT_DISCOUNT": {
-        assertDraft(state);
-        if (state.revision.adjustments.some(item => item.id === "post-vat-discount")) throw new Error("The post-VAT discount is already explicit in this revision.");
-        state.revision.adjustments.push({ id:"post-vat-discount", label:"Negotiated discount on VAT-inclusive total", kind:"percent", basisPoints:-300, stage:"post_vat" });
-        state.history.push({ date:now(), event:"3% negotiated discount added after VAT; the unusual basis remains explicit" });
-        return state;
+        if (state.working.adjustments.some(item => item.id === "post-vat-discount")) throw new Error("The post-VAT discount is already explicit in the working Quote.");
+        state.working.adjustments.push({ id:"post-vat-discount", label:"Negotiated discount on VAT-inclusive total", kind:"percent", basisPoints:-300, stage:"post_vat" });
+        return markChanged(state, "3% negotiated discount added after VAT; the unusual basis remains explicit");
       }
       case "APPLY_LEVY": {
-        assertDraft(state);
-        if (state.revision.adjustments.some(item => item.id === "industry-levy")) throw new Error("The industry levy is already explicit in this revision.");
-        state.revision.adjustments.push({ id:"industry-levy", label:"Industry levy", kind:"percent", basisPoints:150, stage:"pre_vat" });
-        state.history.push({ date:now(), event:"1.5% industry levy added after prior adjustments and before VAT" });
-        return state;
+        if (state.working.adjustments.some(item => item.id === "industry-levy")) throw new Error("The industry levy is already explicit in the working Quote.");
+        state.working.adjustments.push({ id:"industry-levy", label:"Industry levy", kind:"percent", basisPoints:150, stage:"pre_vat" });
+        return markChanged(state, "1.5% industry levy added after prior adjustments and before VAT");
       }
       case "EDIT_FIRST_PRICE": {
-        assertDraft(state);
-        const first = state.revision.sections[0].lines.find(item => item.inclusion === "priced");
+        const first = state.working.sections[0].lines.find(item => item.inclusion === "priced");
         if (first.unitPrice != null) first.unitPrice += 500;
         else first.amountOverride += 50000;
-        state.history.push({ date:now(), event:"First priced line updated in the draft" });
-        return state;
+        return markChanged(state, state.publishedRevisions.length ? "Price edited; the Quote now has unpublished changes" : "Price edited in the working draft");
       }
-      case "FINALIZE": {
-        assertDraft(state);
-        const calc = calculate(state.revision);
-        if (!state.customer.name || !state.project.title || calc.total <= 0) throw new Error("Customer, project title, and a positive total are required before finalization.");
-        state.revision.status = "finalized";
-        state.revision.finalizedAt = new Date().toISOString();
-        state.finalizedRevisions.push(clone({
-          revision:state.revision, customer:state.customer, project:state.project,
-          language:state.language, priceBasis:state.priceBasis,
-          businessSnapshot:state.businessSnapshot, calculatedTotal:calc.total
+      case "PUBLISH": {
+        const calc = calculate(state.working);
+        if (!state.customer.name || !state.project.title || calc.total <= 0) throw new Error("Customer, project title, and a positive total are required before publishing.");
+        if (state.publishedRevisions.length && state.lastPublishedChangeCounter === state.changeCounter) throw new Error("Nothing changed. Revision " + state.publishedRevisions.length + " remains the current customer version; download its PDF instead.");
+        const revisionNumber = state.publishedRevisions.length + 1;
+        state.publishedRevisions.push(clone({
+          revision:{ ...state.working, number:revisionNumber, publishedAt:new Date().toISOString() },
+          customer:state.customer, project:state.project, language:state.language,
+          priceBasis:state.priceBasis, businessSnapshot:state.businessSnapshot,
+          calculatedTotal:calc.total
         }));
-        state.history.push({ date:now(), event:`Revision ${state.revision.number} finalized; its complete commercial snapshot and Quote PDF are now immutable` });
+        state.lastPublishedChangeCounter = state.changeCounter;
+        state.history.push({ date:now(), event:`Revision ${revisionNumber} published; its complete commercial snapshot and Quote PDF are preserved` });
         return state;
       }
-      case "START_REVISION": {
-        if (state.revision.status !== "finalized") throw new Error("Finalize the current draft before starting another revision.");
-        if (["accepted", "cancelled"].includes(state.outcome.status)) throw new Error(`A ${state.outcome.status} Quote is closed. Create a new Quote rather than changing the accepted or withdrawn offer.`);
-        const priorOutcome = state.outcome.status;
-        state.revision = clone(state.revision);
-        state.revision.number += 1;
-        state.revision.status = "draft";
-        state.revision.finalizedAt = null;
-        state.revision.quoteDate = now();
-        state.outcome = { status:"open", revisionNumber:null, recordedAt:null };
-        state.history.push({ date:now(), event:`Revision ${state.revision.number} draft created from the last finalized revision${priorOutcome === "open" ? "" : ` after revision ${state.revision.number - 1} was ${priorOutcome}`}` });
+      case "DOWNLOAD_LATEST": {
+        if (!state.publishedRevisions.length) throw new Error("Publish the Quote before downloading a customer-ready Quote PDF.");
         return state;
       }
       case "DUPLICATE": {
         const source = state.number;
-        const latest = clone(state.revision);
         state = {
           ...state,
           quoteId:crypto.randomUUID(), number:"EQ-2026-0099", customer:{ name:"New Customer", address:"New address required" },
-          sourceQuote:source, outcome:{ status:"open", revisionNumber:null, recordedAt:null }, finalizedRevisions:[],
-          revision:{ ...latest, number:1, status:"draft", quoteDate:now(), validUntil:"2026-10-31", finalizedAt:null },
-          history:[{ date:now(), event:`New Quote duplicated from ${source}; new number reserved and prior evidence detached` }]
+          sourceQuote:source, publishedRevisions:[], changeCounter:0, lastPublishedChangeCounter:null,
+          working:{ ...clone(state.working), quoteDate:now(), validUntil:"2026-10-31" },
+          history:[{ date:now(), event:`New Quote duplicated from the visible working contents of ${source}; new number reserved and revision history omitted` }]
         };
         return state;
       }
       case "CHANGE_CUSTOMER": {
-        if (state.finalizedRevisions.length) throw new Error("A finalized Quote cannot be moved to another Customer. Duplicate it so the new offer receives its own number.");
-        assertDraft(state);
+        if (state.publishedRevisions.length) throw new Error("A published Quote belongs to its Customer. Duplicate the visible working Quote for another Customer.");
         state.customer = { name:"Changed Customer", address:"Changed address" };
-        state.history.push({ date:now(), event:"Customer changed before first finalization" });
-        return state;
+        return markChanged(state, "Customer changed before first publication");
       }
-      case "MARK_ACCEPTED": return recordOutcome(state, "accepted");
-      case "MARK_DECLINED": return recordOutcome(state, "declined");
-      case "MARK_EXPIRED": return recordOutcome(state, "expired");
-      case "CANCEL_QUOTE": return recordOutcome(state, "cancelled");
       default: throw new Error(`Unknown action: ${action.type}`);
     }
-  };
-
-  const recordOutcome = (state, status) => {
-    if (state.revision.status !== "finalized") throw new Error("An outcome can name only a finalized revision.");
-    if (state.outcome.status !== "open") throw new Error(`This Quote already records revision ${state.outcome.revisionNumber} as ${state.outcome.status}.`);
-    state.outcome = { status, revisionNumber:state.revision.number, recordedAt:now() };
-    state.history.push({ date:now(), event:`Revision ${state.revision.number} recorded as ${status}` });
-    return state;
   };
 
   return { fixedDraft, estimateDraft, nonVatDraft, calculate, lineAmount, reduce };
@@ -324,46 +293,45 @@ const QuoteModel = (() => {
 const actions = [
   ["LOAD_FIXED","Load fixed-price carpenter draft"], ["LOAD_ESTIMATE","Load approximate-estimate example"], ["LOAD_NON_VAT","Load non-VAT business example"],
   ["ADD_OPTION","Add optional work"], ["ADD_EXCLUSION","Add Customer responsibility"], ["APPLY_DISCOUNT","Apply 3% pre-VAT discount"],
-  ["APPLY_POST_VAT_DISCOUNT","Apply 3% discount after VAT"], ["APPLY_LEVY","Apply 1.5% levy"], ["EDIT_FIRST_PRICE","Edit first price"], ["FINALIZE","Finalize current revision"],
-  ["START_REVISION","Start explicit revision"], ["DUPLICATE","Duplicate as new Quote"], ["CHANGE_CUSTOMER","Change Customer"],
-  ["MARK_ACCEPTED","Record acceptance"], ["MARK_DECLINED","Record decline"], ["MARK_EXPIRED","Record expiry"], ["CANCEL_QUOTE","Cancel Quote"]
+  ["APPLY_POST_VAT_DISCOUNT","Apply 3% discount after VAT"], ["APPLY_LEVY","Apply 1.5% levy"], ["EDIT_FIRST_PRICE","Edit first price"],
+  ["PUBLISH","Publish Quote or revision"], ["DOWNLOAD_LATEST","Download latest published PDF"], ["DUPLICATE","Duplicate visible Quote"], ["CHANGE_CUSTOMER","Change Customer"]
 ];
 const walkthroughs = [
   {
-    name:"Finalize and revise",
-    description:"Watch a numbered draft become immutable. An attempted direct edit is refused; an explicit revision preserves the earlier finalized source and PDF.",
+    name:"Publish and keep editing",
+    description:"Publishing preserves the current customer-facing revision without locking the working Quote. Later edits become unpublished changes, and publishing again archives the next numbered revision.",
     start:"LOAD_FIXED",
-    steps:[["FINALIZE","Freeze revision 1"],["EDIT_FIRST_PRICE","Try to edit the finalized price"],["START_REVISION","Create revision 2 draft"],["EDIT_FIRST_PRICE","Change price in revision 2"],["FINALIZE","Freeze revision 2"]]
+    steps:[["PUBLISH","Publish revision 1"],["DOWNLOAD_LATEST","Download revision 1 PDF"],["EDIT_FIRST_PRICE","Keep editing the working Quote"],["PUBLISH","Publish revision 2"],["EDIT_FIRST_PRICE","Create more unpublished changes"]]
+  },
+  {
+    name:"No duplicate revisions",
+    description:"Publishing twice without any intervening change does not create meaningless revision history. The existing PDF remains downloadable as often as needed.",
+    start:"LOAD_FIXED",
+    steps:[["PUBLISH","Publish revision 1"],["PUBLISH","Try publishing unchanged content"],["DOWNLOAD_LATEST","Download the existing revision instead"]]
   },
   {
     name:"Estimate, options, and totals",
     description:"Inspect orthogonal line attributes and ordered calculations. Options and exclusions remain visible but outside the payable total; discount and levy change the VAT basis in sequence.",
     start:"LOAD_ESTIMATE",
-    steps:[["ADD_OPTION","Add another option"],["ADD_EXCLUSION","Add a Customer responsibility"],["APPLY_DISCOUNT","Add negotiated discount"],["APPLY_LEVY","Add industry levy"],["FINALIZE","Finalize the estimate"]]
+    steps:[["ADD_OPTION","Add another option"],["ADD_EXCLUSION","Add a Customer responsibility"],["APPLY_DISCOUNT","Add negotiated discount"],["APPLY_LEVY","Add industry levy"],["PUBLISH","Publish the estimate"]]
   },
   {
     name:"Revision versus duplicate",
-    description:"A revision changes the same offer and keeps its number. A duplicate creates a distinct offer, Customer, number, history, and revision sequence.",
+    description:"A revision preserves the same offer and Quote number. A duplicate copies the visible working content—including unpublished edits—but receives a new number and no revision history.",
     start:"LOAD_FIXED",
-    steps:[["FINALIZE","Finalize the source Quote"],["CHANGE_CUSTOMER","Try moving it to another Customer"],["DUPLICATE","Duplicate into a new Quote"],["EDIT_FIRST_PRICE","Tailor the new draft"],["FINALIZE","Finalize the independent Quote"]]
+    steps:[["PUBLISH","Publish revision 1"],["EDIT_FIRST_PRICE","Make an unpublished change"],["DUPLICATE","Duplicate the visible working Quote"],["EDIT_FIRST_PRICE","Tailor the new draft"],["PUBLISH","Publish its revision 1"]]
   },
   {
     name:"Adjustment basis",
     description:"The corpus contains both ordinary pre-VAT adjustments and a handwritten discount on a VAT-inclusive total. The stage is explicit so the canonical model preserves rather than silently normalizes the commercial math.",
     start:"LOAD_FIXED",
-    steps:[["APPLY_DISCOUNT","Apply an ordinary pre-VAT discount"],["APPLY_POST_VAT_DISCOUNT","Add the unusual VAT-inclusive discount"],["FINALIZE","Freeze the exact calculation"]]
-  },
-  {
-    name:"Outcome belongs to a revision",
-    description:"A Customer outcome names the exact finalized revision. Acceptance closes the offer; decline or expiry may be followed only by an explicit revision, which reopens the Quote.",
-    start:"LOAD_FIXED",
-    steps:[["FINALIZE","Finalize revision 1"],["MARK_DECLINED","Record that revision 1 was declined"],["START_REVISION","Reopen through revision 2"],["EDIT_FIRST_PRICE","Change the revised offer"],["FINALIZE","Finalize revision 2"],["MARK_ACCEPTED","Record acceptance of revision 2"],["START_REVISION","Try revising an accepted Quote"]]
+    steps:[["APPLY_DISCOUNT","Apply an ordinary pre-VAT discount"],["APPLY_POST_VAT_DISCOUNT","Add the unusual VAT-inclusive discount"],["PUBLISH","Preserve the exact calculation"]]
   },
   {
     name:"VAT guardrail",
-    description:"A non-VAT-registered Artisan Business has no VAT line or VAT number. Finalization preserves that issuer snapshot rather than relying on later onboarding changes.",
+    description:"A non-VAT-registered Artisan Business has no VAT line or VAT number. Publishing preserves that issuer snapshot rather than relying on later onboarding changes.",
     start:"LOAD_NON_VAT",
-    steps:[["APPLY_DISCOUNT","Apply a commercial discount"],["FINALIZE","Finalize without VAT"],["START_REVISION","Create another revision"],["EDIT_FIRST_PRICE","Change a price"],["FINALIZE","Finalize the revised Quote"]]
+    steps:[["APPLY_DISCOUNT","Apply a commercial discount"],["PUBLISH","Publish without VAT"],["EDIT_FIRST_PRICE","Keep editing afterward"],["PUBLISH","Publish revision 2"]]
   }
 ];
 let state = QuoteModel.fixedDraft();
@@ -377,8 +345,10 @@ const quantity = item => item.quantity.kind === "numeric" ? item.quantity.value 
 const lineAmount = item => item.inclusion === "priced" ? francs(QuoteModel.lineAmount(item)) : "—";
 
 function render() {
-  const calc = QuoteModel.calculate(state.revision);
-  const sectionHtml = state.revision.sections.map(section => `
+  const calc = QuoteModel.calculate(state.working);
+  const hasUnpublishedChanges = !state.publishedRevisions.length || state.lastPublishedChangeCounter !== state.changeCounter;
+  const workingState = !state.publishedRevisions.length ? "Draft · not published" : hasUnpublishedChanges ? `Unpublished changes · next revision ${state.publishedRevisions.length + 1}` : `Published revision ${state.publishedRevisions.length}`;
+  const sectionHtml = state.working.sections.map(section => `
     <h3 class="section-title">${text(section.title)} · ${francs(calc.sectionTotals.find(value => value.id === section.id).total)}</h3>
     <table><thead><tr><th>Description</th><th>Commercial treatment</th><th>Work / materials / certainty</th><th>Quantity</th><th class="money">Unit price</th><th class="money">Amount</th></tr></thead><tbody>
     ${section.lines.map(item => `<tr class="${item.inclusion === "priced" ? "" : "muted"}">
@@ -392,18 +362,17 @@ function render() {
     </tbody></table>`).join("");
   const preVatAdjustments = calc.preVatAdjustments.map(item => `<tr><td>${text(item.label)} (${item.basisPoints / 100}%, before VAT)</td><td class="money">${francs(item.amount)}</td></tr>`).join("");
   const postVatAdjustments = calc.postVatAdjustments.map(item => `<tr><td>${text(item.label)} (${item.basisPoints / 100}%, after VAT)</td><td class="money">${francs(item.amount)}</td></tr>`).join("");
-  const snapshots = state.finalizedRevisions.length ? state.finalizedRevisions.map(snapshot => `<li><strong>Revision ${snapshot.revision.number}</strong> — finalized ${text(snapshot.revision.finalizedAt.slice(0,10))}; ${text(snapshot.customer.name)}, ${text(snapshot.businessSnapshot.name)}, ${francs(snapshot.calculatedTotal)}; immutable source and Quote PDF retained</li>`).join("") : `<li class="empty">No finalized revision yet.</li>`;
+  const snapshots = state.publishedRevisions.length ? state.publishedRevisions.map(snapshot => `<li><strong>Revision ${snapshot.revision.number}</strong> — published ${text(snapshot.revision.publishedAt.slice(0,10))}; ${text(snapshot.customer.name)}, ${text(snapshot.businessSnapshot.name)}, ${francs(snapshot.calculatedTotal)}; preserved source and revision-numbered Quote PDF available</li>`).join("") : `<li class="empty">No published revision yet.</li>`;
   document.querySelector("#state").innerHTML = `
     <div class="grid">
-      <div class="field span-3"><span class="label">Quote</span><span class="value">${text(state.number)} · revision ${state.revision.number}</span></div>
-      <div class="field span-3"><span class="label">Revision state</span><span class="value"><span class="badge ${state.revision.status === "draft" ? "draft":"closed"}">${text(state.revision.status)}</span></span></div>
-      <div class="field span-3"><span class="label">Customer outcome</span><span class="value">${text(state.outcome.status)}${state.outcome.revisionNumber ? ` · revision ${state.outcome.revisionNumber}`:""}</span></div>
+      <div class="field span-3"><span class="label">Quote</span><span class="value">${text(state.number)}</span></div>
+      <div class="field span-6"><span class="label">Working state</span><span class="value"><span class="badge ${hasUnpublishedChanges ? "draft":"closed"}">${text(workingState)}</span></span></div>
       <div class="field span-3"><span class="label">Price basis</span><span class="value">${text(phrase(state.priceBasis))}</span></div>
       <div class="field span-4"><span class="label">Customer</span><span class="value">${text(state.customer.name)}</span><small>${text(state.customer.address)}</small></div>
       <div class="field span-4"><span class="label">Project</span><span class="value">${text(state.project.title)}</span><small>${text(state.project.location)} · Owner: ${text(state.project.owner)}</small></div>
       <div class="field span-4"><span class="label">Artisan Business snapshot</span><span class="value">${text(state.businessSnapshot.name)}</span><small>${text(phrase(state.businessSnapshot.vatStatus))}${state.businessSnapshot.vatNumber ? ` · ${text(state.businessSnapshot.vatNumber)}`:""}</small></div>
-      <div class="field span-3"><span class="label">Quote date</span><span class="value">${text(state.revision.quoteDate)}</span></div>
-      <div class="field span-3"><span class="label">Valid until</span><span class="value">${text(state.revision.validUntil)}</span></div>
+      <div class="field span-3"><span class="label">Quote date</span><span class="value">${text(state.working.quoteDate)}</span></div>
+      <div class="field span-3"><span class="label">Valid until</span><span class="value">${text(state.working.validUntil)}</span></div>
       <div class="field span-3"><span class="label">Output language</span><span class="value">${text(state.language.toUpperCase())}</span></div>
       <div class="field span-3"><span class="label">Created from</span><span class="value">${text(state.sourceQuote || "New Quote")}</span></div>
     </div>
@@ -412,15 +381,15 @@ function render() {
       <tr><td>Priced work subtotal</td><td class="money">${francs(calc.workSubtotal)}</td></tr>
       ${preVatAdjustments}
       <tr><td>VAT basis</td><td class="money">${francs(calc.vatBasis)}</td></tr>
-      <tr><td>VAT ${state.revision.vat.mode === "added" ? `${state.revision.vat.rateBasisPoints / 100}%` : "not applicable"}</td><td class="money">${francs(calc.vat)}</td></tr>
+      <tr><td>VAT ${state.working.vat.mode === "added" ? `${state.working.vat.rateBasisPoints / 100}%` : "not applicable"}</td><td class="money">${francs(calc.vat)}</td></tr>
       ${postVatAdjustments}
       <tr><td>${state.priceBasis === "fixed" ? "Payable total" : "Indicative total"}</td><td class="money">${francs(calc.total)}</td></tr>
     </tbody></table>
     <div class="grid">
-      <div class="span-6"><h3>Finalized evidence</h3><ul class="history">${snapshots}</ul></div>
+      <div class="span-6"><h3>Published revisions</h3><ul class="history">${snapshots}</ul></div>
       <div class="span-6"><h3>History</h3><ul class="history">${state.history.slice().reverse().map(item => `<li><strong>${text(item.date)}</strong> — ${text(item.event)}</li>`).join("")}</ul></div>
     </div>
-    <details><summary>Commercial terms captured in this revision</summary><p><strong>Payment:</strong> ${text(state.revision.terms.payment)}<br><strong>Acceptance:</strong> ${text(state.revision.terms.acceptance)}<br><strong>Notes:</strong> ${text(state.revision.terms.notes)}</p></details>`;
+    <details><summary>Commercial terms in the working Quote</summary><p><strong>Payment:</strong> ${text(state.working.terms.payment)}<br><strong>Acceptance:</strong> ${text(state.working.terms.acceptance)}<br><strong>Notes:</strong> ${text(state.working.terms.notes)}</p></details>`;
 }
 
 function dispatch(type, fromWalkthrough = false) {
