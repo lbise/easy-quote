@@ -73,7 +73,7 @@
       <li>Publishing without changes reuses the latest revision rather than creating a duplicate.</li>
       <li>Every published Quote PDF shows its revision number.</li>
       <li>Publishing implies the revision was prepared for sharing; sharing and Customer outcomes are not tracked.</li>
-      <li>A duplicate copies the visible working Quote into a new number but carries no revision history.</li>
+      <li>A duplicate copies the visible working commercial content into a newly allocated number, asks for its Customer, and carries no revision history.</li>
       <li>The MVP publishes fixed-price Quotes only; estimates and time-and-materials pricing are deferred.</li>
       <li>Optional/excluded lines never silently enter the payable total.</li>
       <li>Inclusion, work performer, and material supplier are independent line attributes.</li>
@@ -127,7 +127,9 @@ const QuoteModel = (() => {
   });
 
   const fixedDraft = (number = "2026-0042", customer = "Camille Martin") => ({
-    quoteId: crypto.randomUUID(), number, customer: { name: customer, address: "Rue Exemple 8, 1000 Lausanne" },
+    quoteId: crypto.randomUUID(), number,
+    numbering: { year:Number(number.slice(0,4)), nextSequence:Number(number.slice(5)) + 1 },
+    customer: { name: customer, address: "Rue Exemple 8, 1000 Lausanne" },
     project: { title: "Interior carpentry renovation", location: "Project address on file", owner:"Same as Customer" },
     language: "fr", currency: "CHF", sourceQuote: null, defaultValidityDays:30,
     businessSnapshot: { name: "Atelier Exemple Sàrl", vatStatus: "registered", vatNumber: "CHE-000.000.000 TVA" },
@@ -195,7 +197,10 @@ const QuoteModel = (() => {
     const applyAdjustments = (items, startingAmount) => {
       let running = startingAmount;
       const applied = items.map(adjustment => {
-        const amount = adjustment.kind === "percent" ? money(running * adjustment.basisPoints / 10000) : adjustment.amount;
+        let amount;
+        if (adjustment.kind === "percent" && Number.isInteger(adjustment.basisPoints)) amount = money(running * adjustment.basisPoints / 10000);
+        else if (adjustment.kind === "fixed" && Number.isInteger(adjustment.amountRappen)) amount = adjustment.amountRappen;
+        else throw new Error(`Invalid ${adjustment.kind} adjustment: ${adjustment.label}`);
         running += amount;
         return { ...adjustment, amount, resultingSubtotal:running };
       });
@@ -242,6 +247,11 @@ const QuoteModel = (() => {
         state.working.adjustments.push({ id:"industry-levy", label:"Industry levy", kind:"percent", basisPoints:150, stage:"pre_vat" });
         return markChanged(state, "1.5% industry levy added after prior adjustments and before VAT");
       }
+      case "APPLY_FIXED_SURCHARGE": {
+        if (state.working.adjustments.some(item => item.id === "fixed-surcharge")) throw new Error("The fixed surcharge is already explicit in the working Quote.");
+        state.working.adjustments.push({ id:"fixed-surcharge", label:"Special material handling", kind:"fixed", amountRappen:25000, stage:"pre_vat" });
+        return markChanged(state, "CHF 250 fixed surcharge added before VAT");
+      }
       case "EDIT_FIRST_PRICE": {
         const first = state.working.sections[0].lines.find(item => item.inclusion === "priced");
         if (first.unitPrice != null) first.unitPrice += 500;
@@ -257,11 +267,16 @@ const QuoteModel = (() => {
         if (!state.customer.name || !state.project.title || calc.total <= 0) throw new Error("Customer, project title, and a positive total are required before publishing.");
         if (state.publishedRevisions.length && state.lastPublishedChangeCounter === state.changeCounter) throw new Error("Nothing changed. Revision " + state.publishedRevisions.length + " remains the current customer version; download its PDF instead.");
         const revisionNumber = state.publishedRevisions.length + 1;
+        const pdfArtifact = {
+          artifactId:crypto.randomUUID(),
+          filename:`quote-${state.number}-revision-${revisionNumber}.pdf`,
+          revisionNumber
+        };
         state.publishedRevisions.push(clone({
           revision:{ ...state.working, number:revisionNumber, publicationDate:now(), validUntil:addDays(now(), state.working.validityDays), publishedAt:new Date().toISOString() },
           customer:state.customer, project:state.project, language:state.language,
-          businessSnapshot:state.businessSnapshot,
-          calculatedTotal:calc.total
+          businessSnapshot:state.businessSnapshot, calculatedTotal:calc.total,
+          quotePdf:pdfArtifact
         }));
         state.lastPublishedChangeCounter = state.changeCounter;
         state.history.push({ date:now(), event:`Revision ${revisionNumber} published; its complete commercial snapshot and Quote PDF are preserved` });
@@ -271,14 +286,20 @@ const QuoteModel = (() => {
         if (!state.publishedRevisions.length) throw new Error("Publish the Quote before downloading a customer-ready Quote PDF.");
         return state;
       }
+      case "DOWNLOAD_REVISION_1": {
+        if (!state.publishedRevisions.some(item => item.revision.number === 1)) throw new Error("Revision 1 has not been published.");
+        return state;
+      }
       case "DUPLICATE": {
         const source = state.number;
+        const nextNumber = `${state.numbering.year}-${String(state.numbering.nextSequence).padStart(4, "0")}`;
+        state.numbering.nextSequence += 1;
         state = {
           ...state,
-          quoteId:crypto.randomUUID(), number:"2026-0099", customer:{ name:"New Customer", address:"New address required" },
+          quoteId:crypto.randomUUID(), number:nextNumber, customer:{ name:"Customer selection required", address:"—" },
           sourceQuote:source, publishedRevisions:[], changeCounter:0, lastPublishedChangeCounter:null,
           working:{ ...clone(state.working), validityDays:state.defaultValidityDays },
-          history:[{ date:now(), event:`New Quote duplicated from the visible working contents of ${source}; new number reserved and revision history omitted` }]
+          history:[{ date:now(), event:`New Quote ${nextNumber} allocated sequentially and duplicated from the working commercial content of ${source}; Customer selection required and revision history omitted` }]
         };
         return state;
       }
@@ -300,15 +321,15 @@ const QuoteModel = (() => {
 const actions = [
   ["LOAD_FIXED","Load fixed-price carpenter draft"], ["LOAD_DETAILED","Load detailed fixed-price example"], ["LOAD_NON_VAT","Load non-VAT business example"],
   ["ADD_OPTION","Add optional work"], ["ADD_EXCLUSION","Add Customer responsibility"], ["APPLY_DISCOUNT","Apply 3% pre-VAT discount"],
-  ["APPLY_POST_VAT_DISCOUNT","Apply 3% discount after VAT"], ["APPLY_LEVY","Apply 1.5% levy"], ["EDIT_FIRST_PRICE","Edit first price"], ["SET_LONGER_VALIDITY","Set next revision validity to 60 days"],
-  ["PUBLISH","Publish Quote or revision"], ["DOWNLOAD_LATEST","Download latest published PDF"], ["DUPLICATE","Duplicate visible Quote"], ["CHANGE_CUSTOMER","Change Customer"]
+  ["APPLY_POST_VAT_DISCOUNT","Apply 3% discount after VAT"], ["APPLY_LEVY","Apply 1.5% levy"], ["APPLY_FIXED_SURCHARGE","Apply CHF 250 fixed surcharge"], ["EDIT_FIRST_PRICE","Edit first price"], ["SET_LONGER_VALIDITY","Set next revision validity to 60 days"],
+  ["PUBLISH","Publish Quote or revision"], ["DOWNLOAD_LATEST","Download latest published PDF"], ["DOWNLOAD_REVISION_1","Download revision 1 PDF"], ["DUPLICATE","Duplicate visible Quote"], ["CHANGE_CUSTOMER","Change Customer"]
 ];
 const walkthroughs = [
   {
     name:"Publish and keep editing",
     description:"Publishing preserves the current customer-facing revision without locking the working Quote. Later edits become unpublished changes, and publishing again archives the next numbered revision.",
     start:"LOAD_FIXED",
-    steps:[["PUBLISH","Publish revision 1"],["DOWNLOAD_LATEST","Download revision 1 PDF"],["EDIT_FIRST_PRICE","Keep editing the working Quote"],["PUBLISH","Publish revision 2"],["EDIT_FIRST_PRICE","Create more unpublished changes"]]
+    steps:[["PUBLISH","Publish revision 1"],["DOWNLOAD_LATEST","Download revision 1 PDF"],["EDIT_FIRST_PRICE","Keep editing the working Quote"],["PUBLISH","Publish revision 2"],["DOWNLOAD_REVISION_1","Retrieve the preserved revision 1 PDF"],["EDIT_FIRST_PRICE","Create more unpublished changes"]]
   },
   {
     name:"No duplicate revisions",
@@ -320,7 +341,7 @@ const walkthroughs = [
     name:"Fixed scope, options, and totals",
     description:"Inspect fixed-price lines and ordered calculations. Options and exclusions remain visible but outside the payable total; discount and levy change the VAT basis in sequence.",
     start:"LOAD_DETAILED",
-    steps:[["ADD_OPTION","Add another fixed-price option"],["ADD_EXCLUSION","Add a Customer responsibility"],["APPLY_DISCOUNT","Add negotiated discount"],["APPLY_LEVY","Add industry levy"],["PUBLISH","Publish the fixed-price Quote"]]
+    steps:[["ADD_OPTION","Add another fixed-price option"],["ADD_EXCLUSION","Add a Customer responsibility"],["APPLY_DISCOUNT","Add percentage discount"],["APPLY_LEVY","Add percentage levy"],["APPLY_FIXED_SURCHARGE","Add a fixed surcharge"],["PUBLISH","Publish the fixed-price Quote"]]
   },
   {
     name:"Revision versus duplicate",
@@ -373,9 +394,10 @@ function render() {
       <td class="money">${lineAmount(item)}</td>
     </tr>`).join("")}
     </tbody></table>`).join("");
-  const preVatAdjustments = calc.preVatAdjustments.map(item => `<tr><td>${text(item.label)} (${item.basisPoints / 100}%, before VAT)</td><td class="money">${francs(item.amount)}</td></tr>`).join("");
-  const postVatAdjustments = calc.postVatAdjustments.map(item => `<tr><td>${text(item.label)} (${item.basisPoints / 100}%, after VAT)</td><td class="money">${francs(item.amount)}</td></tr>`).join("");
-  const snapshots = state.publishedRevisions.length ? state.publishedRevisions.map(snapshot => `<li><strong>${text(state.number)} · Revision ${snapshot.revision.number}</strong> — published ${text(snapshot.revision.publicationDate)}, valid until ${text(snapshot.revision.validUntil)}; ${text(snapshot.customer.name)}, ${text(snapshot.businessSnapshot.name)}, ${francs(snapshot.calculatedTotal)}; preserved source and Quote PDF available</li>`).join("") : `<li class="empty">No published revision yet.</li>`;
+  const adjustmentLabel = item => item.kind === "percent" ? `${item.basisPoints / 100}%` : "fixed amount";
+  const preVatAdjustments = calc.preVatAdjustments.map(item => `<tr><td>${text(item.label)} (${text(adjustmentLabel(item))}, before VAT)</td><td class="money">${francs(item.amount)}</td></tr>`).join("");
+  const postVatAdjustments = calc.postVatAdjustments.map(item => `<tr><td>${text(item.label)} (${text(adjustmentLabel(item))}, after VAT)</td><td class="money">${francs(item.amount)}</td></tr>`).join("");
+  const snapshots = state.publishedRevisions.length ? state.publishedRevisions.map(snapshot => `<li><strong>${text(state.number)} · Revision ${snapshot.revision.number}</strong> — published ${text(snapshot.revision.publicationDate)}, valid until ${text(snapshot.revision.validUntil)}; ${text(snapshot.customer.name)}, ${text(snapshot.businessSnapshot.name)}, ${francs(snapshot.calculatedTotal)}<br><small>Preserved PDF: ${text(snapshot.quotePdf.filename)} · artifact ${text(snapshot.quotePdf.artifactId)}</small></li>`).join("") : `<li class="empty">No published revision yet.</li>`;
   document.querySelector("#state").innerHTML = `
     <div class="grid">
       <div class="field span-3"><span class="label">Quote</span><span class="value">${text(state.number)}</span></div>
