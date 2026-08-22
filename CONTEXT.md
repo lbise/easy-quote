@@ -16,6 +16,14 @@ _Avoid_: Operator, salesperson
 A reusable record of the person or organization for whom an Artisan Business proposes work.
 _Avoid_: Client, buyer
 
+**Business Default**:
+A reusable value set by an Artisan Business and copied into new Quotes, such as output language, validity, payment terms, or acceptance instructions.
+_Avoid_: Template setting, global Quote value
+
+**Business Identity Snapshot**:
+The Artisan Business identity, contact information, and VAT status recorded on a Quote independently of later Business changes.
+_Avoid_: Live Business profile
+
 **Quote**:
 An editable commercial record describing proposed work for a Customer, including quantities and prices. It remains editable after publication.
 _Avoid_: Estimate, invoice, proposal
