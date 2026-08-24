@@ -1,59 +1,67 @@
-# Artisan Quote reference corpus
+# Corpus de référence des devis d'artisans
 
-This corpus contains sanitized, text-based reconstructions of six privately supplied Swiss artisan documents. It exists to support product, Quote-model, capture, PDF, and validation decisions without storing the source PDFs or identifying their parties.
+Ce corpus réunit six reconstructions textuelles et assainies de documents suisses privés. Il aide à décider du produit, du modèle de `Quote`, de la capture, du PDF et de la validation, sans conserver les PDF source ni l'identité de leurs parties.
 
 ## Corpus
 
-| Sample | Kind | Trade | Source shape | Notable patterns |
+| Échantillon | Nature | Métier | Forme source | Particularités observées |
 | --- | --- | --- | --- | --- |
-| [Earthworks and drainage](quotes/earthworks-drainage.md) | Quote | Earthworks | 3 pages | Work sections, unit lines, acceptance block, price-adjustment terms |
-| [Replacement windows](quotes/replacement-windows.md) | Quote | Window fabrication and installation | 7 pages | Technical specification, product positions, discount, warranty |
-| [Terrace and planting bed](quotes/terrace-landscaping.md) | Quote | Landscaping | 2 pages | Simple project sections, materials and labour, VAT summary |
-| [Plastering and painting](quotes/plastering-painting.md) | Quote | Plastering and painting | 3 pages | Room-based scope, options, exclusions, estimates, levy |
-| [Interior carpentry renovation](quotes/interior-carpentry.md) | Quote | Carpentry/joinery | 4 scanned pages | Two scope sheets, mixed units, handwritten selection and discount |
-| [Ventilated facade pricing source](pricing/carpentry-facade-invoice.md) | Invoice used as a pricing source | Carpentry/joinery | 4 pages | Area-based sections, bundled work, deposit deduction |
+| [Terrassement et drainage](quotes/earthworks-drainage.md) | Devis | Terrassement | 3 pages | Postes par travaux, unités, acceptation, réserve de prix |
+| [Remplacement de fenêtres](quotes/replacement-windows.md) | Offre | Fabrication et pose de fenêtres | 7 pages | Spécification technique, positions produit, rabais, garantie |
+| [Terrasse et massif](quotes/terrace-landscaping.md) | Devis | Paysagisme | 2 pages | Rubriques simples, matériaux et main-d'oeuvre, récapitulatif TVA |
+| [Plâtrerie et peinture](quotes/plastering-painting.md) | Devis estimatif | Plâtrerie et peinture | 3 pages numérisées | Portée par pièce, options, exclusions, estimation, contribution |
+| [Rénovation de menuiserie intérieure](quotes/interior-carpentry.md) | Devis | Menuiserie | 4 pages numérisées | Deux feuilles chiffrées, unités mixtes, choix et rabais manuscrits |
+| [Source de prix pour façade ventilée](pricing/carpentry-facade-invoice.md) | Facture utilisée comme source de prix | Charpente et menuiserie | 4 pages | Rubriques par surface, travaux groupés, déduction d'acompte |
 
-The corpus therefore covers five trade families and five Quotes. The sixth document is intentionally classified as an invoice rather than a Quote; it is useful only as evidence for reusable carpenter/joiner descriptions, units, and prices.
+Le corpus couvre donc cinq familles de métier et cinq `Quote`. Le sixième document est volontairement une facture, pas un devis. Il atteste seulement des descriptions, unités et relations de prix réutilisables en menuiserie.
 
-## Sanitization
+## Lire une reconstruction
 
-The source PDFs remain outside the repository. These derivatives:
+Chaque échantillon distingue l'évidence source française de la reconstruction. Les en-têtes de tableau, abréviations d'unité et qualificatifs explicitement relevés sont transcrits littéralement, y compris leurs formes courtes. Un crochet ou une annotation indique un champ reconstruit. Les titres de navigation et la prose de mise en page restent analytiques, pas des libellés source implicites. Seules les descriptions pouvant identifier une partie sont paraphrasées en français.
 
-- replace every person, business, address, direct contact, account, tax identifier, signature, document number, and project reference with neutral placeholders;
-- omit logos, letterhead artwork, signatures, metadata, and the original filenames;
-- paraphrase descriptions while retaining their commercial meaning;
-- alter and round quantities and monetary amounts while retaining realistic ordering and calculation patterns;
-- retain only non-identifying standards, units, document structure, and layout observations;
-- call out illegible or ambiguous source content rather than guessing.
+Les sections intitulées **Glossaire analytique anglais, non-évidence source** sont des explications de modélisation. Leur anglais est une glose, jamais une traduction présentée comme provenant du document. Consultez aussi l'[index terminologique français-anglais](terminology-fr-en.md).
 
-The reconstructions are reference evidence, not templates, legal advice, accounting records, or calculation test fixtures.
+Les montants et quantités ont été modifiés. Une annotation signale une ambiguïté, une erreur ou une incohérence plutôt que de la corriger sans trace.
 
-## Coverage gaps and unavailable material
+## Assainissement
 
-At the time of preparation, the following material was unavailable:
+Les PDF source restent hors du dépôt. Ces dérivés :
 
-- a true carpenter/joiner catalog or price list; the supplied pricing source is a single invoice;
-- English-language Quotes;
-- German- or Italian-language Quotes;
-- a sequence showing one Quote through draft, finalization, customer negotiation, and explicit revision;
-- a duplicated Quote reused for a different Customer;
-- accepted and rejected Quote examples;
-- examples with alternative VAT statuses, including a non-VAT-registered Artisan Business;
-- examples for emergency work, time-and-materials work, or uncertain quantities settled after completion;
-- machine-readable exports from quoting software;
-- general import datasets or historical customer/catalog data.
+- remplacent toute personne, entreprise, adresse, coordonnée directe, identifiant de compte ou fiscal, signature, numéro de document et référence de projet par un espace réservé neutre ;
+- omettent les logos, en-têtes illustrés, signatures, métadonnées et noms de fichiers originaux ;
+- paraphrasent les descriptions tout en gardant leur sens commercial ;
+- modifient et arrondissent les quantités et montants, tout en gardant des relations de calcul réalistes ;
+- gardent seulement les normes non identifiantes, unités, structure du document et observations de mise en page ;
+- signalent le texte illisible ou ambigu au lieu de l'inventer.
 
-The source owner may later provide or correct this gap list. Future additions must follow the same sanitization rules and must never commit the originals.
+Ces reconstructions sont des éléments de référence, pas des modèles, conseils juridiques, pièces comptables ni jeux de tests de calcul.
 
-## Cross-sample observations
+## Lacunes et matériel indisponible
 
-The corpus demonstrates that the MVP must be able to represent:
+Les éléments suivants étaient indisponibles lors de la préparation :
 
-- sections by phase, room, facade, floor, or product position;
-- lines priced by item, metre, square metre, cubic metre, hour, lump sum, or package;
-- bundled descriptions with a single amount and component quantities embedded in prose;
-- optional, estimated, excluded, included, and customer-supplied work;
-- section subtotals, page carry-forwards, discounts, levies, VAT, deposits, and final totals;
-- long technical descriptions, commercial terms, warranties, validity, payment terms, and acceptance blocks;
-- incomplete or inconsistent source input, handwritten amendments, and customer selections;
-- multi-page layouts with repeated identity, Quote number, date, headings, and page numbering.
+- un véritable catalogue ou tarif de menuisier, la source de prix fournie est une seule facture ;
+- des `Quote` réellement rédigés en anglais ;
+- des devis en allemand ou italien ;
+- la suite d'un devis entre brouillon, publication, négociation avec le Customer et révision explicite ;
+- un devis dupliqué pour un autre Customer ;
+- des exemples de devis acceptés et refusés ;
+- des exemples avec d'autres statuts TVA, dont une Artisan Business non assujettie ;
+- des travaux urgents, au temps passé ou à quantité incertaine réglée après exécution ;
+- des exports machine d'un logiciel de devis ;
+- des jeux d'import généraux ou des historiques de Customer ou de catalogue.
+
+En particulier, aucune traduction générée ne tient lieu de document anglais source. Le propriétaire des sources peut compléter ou rectifier cette liste. Toute addition doit suivre ces règles d'assainissement et ne doit jamais verser les originaux dans le dépôt.
+
+## Observations transversales
+
+Le MVP doit pouvoir représenter :
+
+- des rubriques par phase, pièce, façade, étage ou position produit ;
+- des lignes au forfait, au mètre, au mètre carré, au mètre cube, à l'heure, à la pièce ou au paquet ;
+- des descriptions groupées avec un montant unique et des quantités de composants dans le texte ;
+- des travaux en option, estimés, exclus, compris ou fournis par le Customer ;
+- sous-totaux, reports de page, rabais, contributions, TVA, acomptes et totaux ;
+- descriptions techniques longues, conditions commerciales, garanties, validité, paiement et acceptation ;
+- saisie source incomplète ou incohérente, modifications manuscrites et choix du Customer ;
+- mises en page sur plusieurs pages avec identité répétée, numéro de devis, date, titre et numéro de page.

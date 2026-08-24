@@ -1,59 +1,65 @@
-# Ventilated facade invoice used as a pricing source
+# Facture de façade ventilée utilisée comme source de prix
 
-## Classification
+## Classification et lecture
 
-This is a sanitized reconstruction of a 4-page French **invoice**, not a Quote and not a catalog. It was supplied as the only carpenter/joiner pricing example. The corpus uses it solely to identify reusable descriptions, units, sectioning, and price relationships. Amounts are altered.
+Reconstruction assainie d'une facture française de quatre pages, pas d'un devis ni d'un catalogue. Elle est la seule source de prix fournie pour la charpente et menuiserie. Le corpus l'emploie seulement pour relever les désignations réutilisables, unités, rubriques et relations de prix. Les montants sont modifiés.
 
-## Layout reconstruction
+## Reconstruction de mise en page
 
-The first page starts directly with the date, contact blocks, Customer address, and project title. There is no visible invoice number in the supplied reconstruction.
+La première page commence directement par la date, les blocs de contact, l'adresse du client et le titre de projet. Aucun numéro de facture n'est visible dans la reconstruction fournie.
 
-**Project:** Replace insulation and install a ventilated facade.
+**Projet :** Remplacer l'isolation et poser une façade ventilée.
 
-Work is divided by facade area:
+Les travaux sont répartis par zone de façade :
 
-1. north-west facade;
-2. north-west return;
-3. north-east facade;
-4. entrance-door facade;
-5. south-east facade;
-6. south facade below balcony;
-7. south-west area below balcony.
+1. façade nord-ouest ;
+2. retour nord-ouest ;
+3. façade nord-est ;
+4. façade de porte d'entrée ;
+5. façade sud-est ;
+6. façade sud sous balcon ;
+7. zone sud-ouest sous balcon.
 
-A representative section contains:
+Une rubrique représentative contient :
 
-| Description | Qty / embedded measures | Unit price | Amount |
+| Désignation | Quantité | Prix unitaire | Prix total |
 | --- | --- | ---: | ---: |
-| Remove shutters, aluminium sills, and water deflectors | 5 items | 385.00 | 1'925.00 |
-| Remove reveals; supply/install wood-fibre and rigid insulation | 17.5 m² | 41.00 | 717.50 |
-| Double battening, ventilation mesh, end profiles, and fixings | several metre quantities in prose | — | 1'920.00 |
-| Additional window-detail work | 5 items | 245.00 | 1'225.00 |
-| Install render-board facade panels | 42 m² | 80.00 | 3'360.00 |
-| **Section subtotal** |  |  | **9'147.50** |
+| Dépose de volets, tablettes aluminium et déflecteurs d'eau | 5 pièces | 385.00 | 1'925.00 |
+| Dépose de tableaux, fourniture et pose de fibre de bois et isolant rigide | 17.5 m² | 41.00 | 717.50 |
+| Double lattage, grille de ventilation, profils de finition et fixations | plusieurs mètres dans le texte | — | 1'920.00 |
+| Travail complémentaire de détail de fenêtre | 5 pièces | 245.00 | 1'225.00 |
+| Pose de panneaux de façade pour enduit | 42 m² | 80.00 | 3'360.00 |
+| **[total de rubrique reconstitué]** |  |  | **9'147.50** |
 
-The double-battening line embeds four component quantities in its description but has one bundled amount. Each facade area ends with a subtotal.
+La ligne de double lattage contient quatre quantités de composants dans sa description, mais un seul montant groupé. Chaque zone de façade se termine par un sous-total.
 
-The final page ends with:
+La dernière page se termine par :
 
-| Summary | CHF |
+| [récapitulatif reconstitué] | CHF |
 | --- | ---: |
-| Complete subtotal | 27'060.00 |
-| VAT | 2'192.00 |
-| Deposit already paid | -9'000.00 |
-| **Invoice balance** | **20'252.00** |
+| [sous-total complet reconstitué] | 27'060.00 |
+| [TVA reconstituée] | 2'192.00 |
+| [acompte déjà versé reconstitué] | -9'000.00 |
+| **Montant de la Facture** | **20'252.00** |
 
-Bank, tax, business, personal, and signature details are omitted.
+Les coordonnées bancaires, fiscales, de l'entreprise et des personnes, ainsi que la signature, sont omises.
 
-## Pricing evidence
+## Évidence de prix
 
-Potential reusable catalog concepts include:
+Des concepts de catalogue potentiellement réutilisables sont :
 
-- site setup and scaffolding as separate fixed-price entries;
-- removal priced per opening;
-- insulation and facade board priced per square metre;
-- detail work priced per window or door;
-- battens, mesh, and profiles measured in linear metres but bundled into one installed amount;
-- facade orientation/location as a section attribute;
-- a deposit as a settlement item, which belongs to invoicing and is outside the Easy Quote MVP destination.
+- installation de chantier et échafaudage comme postes forfaitaires séparés ;
+- dépose au prix par ouverture ;
+- isolation et panneau de façade au mètre carré ;
+- travail de détail au prix par fenêtre ou porte ;
+- lattes, grille et profils mesurés au mètre linéaire mais groupés dans un montant posé ;
+- orientation ou emplacement de façade comme attribut de rubrique ;
+- acompte comme élément de règlement, propre à une facture et hors destination MVP d'Easy Quote.
 
-This single project does not establish stable catalog prices. The amounts are evidence of pricing shapes only and must not seed production defaults.
+Cette seule réalisation ne prouve pas des prix de catalogue stables. Les montants montrent des formes de prix seulement et ne doivent pas créer de valeurs de production par défaut.
+
+## Glossaire analytique anglais, non-évidence source
+
+- This document is an invoice, not a Quote or a catalog.
+- Bundled component measures need not become separately priced lines.
+- A paid deposit is settlement evidence, not a Quote adjustment.

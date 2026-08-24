@@ -1,60 +1,64 @@
-# Plastering and painting Quote
+# Devis estimatif de plâtrerie et peinture
 
-## Provenance
+## Provenance et lecture
 
-Sanitized reconstruction of a 3-page scanned French “estimated Quote” for plastering and painting during a house renovation. Amounts are altered.
+Reconstruction assainie d'un devis estimatif français, numérisé sur trois pages, pour la plâtrerie et la peinture d'une rénovation. Les montants sont modifiés. « Devis estimatif » est conservé comme libellé source, il ne devient pas un `Quote` anglais dans l'évidence.
 
-## Layout reconstruction
+## Reconstruction de mise en page
 
-### Page 1 — identity, scope, and ground floor
+### Page 1, identité, objet et rez-de-chaussée
 
-The header contains a large logo, Artisan Business capabilities and credentials, Customer/intermediary address, date, project address, owner, and the title “Estimated Quote.”
+L'en-tête comprend un grand logo, les capacités et qualifications de l'entreprise artisanale, l'adresse du client ou de l'intermédiaire, la date, l'adresse du projet, le propriétaire et le titre « Devis estimatif ». Identité, adresses et logo sont omis.
 
-Scope is organized by floor and room group rather than numbered line items:
+La portée est rangée par étage et groupe de pièces, non par positions numérotées :
 
-| Area / work | Qualifier | Amount CHF |
+| [zone ou travail reconstitué] | [qualificatif reconstruit] | [montant CHF reconstruit] |
 | --- | --- | ---: |
-| Office, living and dining ceilings — protection | priced | 360.00 |
-| New plasterboard ceiling, jointing, sanding, primer, and paint | priced | 9'850.00 |
-| Small service cut-outs | option, per item | 15.00 |
-| Kitchen ceiling — protection | priced | 90.00 |
-| Fire-rated ceiling variant | option | — |
-| Standard ceiling variant | priced | 3'100.00 |
-| Window box | option, lump sum | 390.00 |
+| Bureau, salon et plafonds de salle à manger, protections | chiffré | 360.00 |
+| Nouveau plafond en plaques, joints, ponçage, primaire et peinture | chiffré | 9'850.00 |
+| Petites découpes de service | option, à la pièce | 15.00 |
+| Plafond de cuisine, protections | chiffré | 90.00 |
+| Variante de plafond coupe-feu | option | — |
+| Variante de plafond standard | chiffré | 3'100.00 |
+| Coffrage de fenêtre | option, forfait | 390.00 |
 
-A page subtotal is printed at the bottom.
+Un sous-total de page est imprimé en bas.
 
-### Page 2 — carry-forward, other rooms, upper floor
+### Page 2, report, autres pièces et étage
 
-The previous page total is carried forward. Further room groups contain:
+Le total de la page précédente est reporté. Les autres groupes de pièces comprennent :
 
-- protection as a separately priced line;
-- jointing and painting over panels installed by another trade;
-- wallpaper removal by Customer, marked **not included**;
-- making-good marked **estimated**;
-- ceiling, wall, and finishing systems with a single lump-sum amount.
+- protections comme ligne chiffrée distincte ;
+- joints et peinture sur panneaux posés par un autre corps de métier ;
+- enlèvement du papier peint par le client, marqué **non compris** ;
+- reprises marquées **`esti.`** ;
+- plafonds, murs et systèmes de finition avec un seul montant forfaitaire.
 
-Another accumulated total appears at the bottom.
+Un nouveau total cumulé apparaît en bas de page.
 
-### Page 3 — adjustments and final amount
+### Page 3, ajustements et montant final
 
-The final room group is followed by contingency marked estimated.
+Le dernier groupe de pièces est suivi d'une réserve marquée **`esti.`**.
 
-| Adjustment | CHF |
+| [ajustements reconstitués] | CHF |
 | --- | ---: |
-| Work subtotal | 44'100.00 |
-| Prompt-payment discount, 2% of work subtotal | -882.00 |
-| Waste/industry levy, 1.5% of discounted subtotal | 648.27 |
-| VAT, historical sample rate, applied after discount and levy | 3'377.70 |
-| **Total** | **47'243.97** |
+| [sous-total travaux reconstitué] | 44'100.00 |
+| [escompte reconstitué] | -882.00 |
+| Taxes déchets et COV 1.5% | 648.27 |
+| [TVA reconstituée] | 3'377.70 |
+| **[total reconstitué]** | **47'243.97** |
 
-Payment terms are printed alone near the bottom of the last page.
+Les conditions de paiement sont imprimées seules vers le bas de la dernière page.
 
-## Modeling evidence
+**Annotation, qualificatif et exclusion.** `esti.` est l'abréviation observée, elle n'est pas développée dans la reconstruction. Une option, une ligne marquée `esti.`, une exclusion et un travail confié à une autre partie ont un effet commercial différent.
+
+**Annotation, prélèvement.** `Taxes déchets et COV 1.5%` est le libellé source complet. *Waste-related levy* est une glose analytique anglaise seulement. Le corpus n'en déduit ni base légale ni catégorie réglementaire.
+
+## Glossaire analytique anglais, non-évidence source
 
 - The Customer and property owner can be different parties.
 - Scope is grouped spatially without line numbers or explicit quantities.
-- A line may be priced, optional, estimated, excluded, or performed by another party.
+- A line may be priced, optional, marked `esti.`, excluded, or performed by another party. `esti.` remains unexpanded.
 - Options may use per-item or lump-sum pricing without entering the main total.
-- Domain-specific levies coexist with discounts and VAT.
+- `Taxes déchets et COV 1.5%` is retained literally. “Waste-related levy” is an analytical English gloss, not a legal classification.
 - Carry-forward totals are part of the visual layout, not additional commercial adjustments.

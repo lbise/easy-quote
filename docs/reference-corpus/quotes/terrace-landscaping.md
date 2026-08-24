@@ -1,59 +1,63 @@
-# Terrace and planting-bed Quote
+# Devis de terrasse et massif décoratif
 
-## Provenance
+## Provenance et lecture
 
-Sanitized reconstruction of a 2-page French landscaping Quote. Quantities and amounts are altered.
+Reconstruction assainie d'un devis français de paysagisme de deux pages. Les quantités et montants sont modifiés. Les libellés français et les unités suivent la langue source. Les descriptions sont paraphrasées pour éviter toute identification.
 
-## Layout reconstruction
+## Reconstruction de mise en page
 
-### Page 1 — complete commercial content
+### Page 1, contenu commercial complet
 
-A prominent business identity block sits above the Customer address, Quote date, and a one-sentence project description.
+Un bloc d'identité d'entreprise très visible précède l'adresse du client, la date du devis et une phrase de projet.
 
-**Project:** Create an approximately 60 m² terrace and an approximately 18 m² decorative stone planting bed.
+**Projet :** Création d'une terrasse d'environ 60 m² et d'un massif décoratif en pierre d'environ 18 m².
 
-#### Terrace
+#### Terrasse
 
-| Description | Qty | Unit price | Amount |
+| Description | Quantité | Prix à l'unité | Montant |
 | --- | ---: | ---: | ---: |
-| Site setup | 1 | 210.00 | 210.00 |
-| Porcelain paving slabs | 66 | 79.00 | 5'214.00 |
-| Lay slabs and level bedding | 60 | 31.00 | 1'860.00 |
-| Geotextile membrane | 180 | 3.10 | 558.00 |
-| Edge restraint | 16 | 7.20 | 115.20 |
-| Fine gravel | 3 | 112.00 | 336.00 |
-| Base aggregate | 10 | 86.00 | 860.00 |
+| Installation de chantier | 1 | 210.00 | 210.00 |
+| Dalles en grès cérame | 66 | 79.00 | 5'214.00 |
+| Pose de dalles et lit de réglage | 60 | 31.00 | 1'860.00 |
+| Nappe géotextile | 180 | 3.10 | 558.00 |
+| Bordure de retenue | 16 | 7.20 | 115.20 |
+| Gravillon fin | 3 | 112.00 | 336.00 |
+| Granulat de fondation | 10 | 86.00 | 860.00 |
 | Ballast | 30 | 84.00 | 2'520.00 |
-| Labour hours | 20 | 66.00 | 1'320.00 |
-| **Terrace subtotal** |  |  | **12'993.20** |
+| Heures de main-d'oeuvre | 20 | 66.00 | 1'320.00 |
+| **Sous-total terrasse** |  |  | **12'993.20** |
 
-#### Decorative stone planting bed
+#### Massif décoratif en pierre
 
-| Description | Qty | Unit price | Amount |
+| Description | Quantité | Prix à l'unité | Montant |
 | --- | ---: | ---: | ---: |
-| Decorative stones | 3.6 | 122.00 | 439.20 |
-| Geotextile membrane | 18 | 3.10 | 55.80 |
-| Ornamental grasses | 4 | 24.00 | 96.00 |
-| Topsoil | 5 | 92.00 | 460.00 |
-| Labour hours | 16 | 66.00 | 1'056.00 |
-| **Planting-bed subtotal** |  |  | **2'107.00** |
+| Pierres décoratives | 3.6 | 122.00 | 439.20 |
+| Nappe géotextile | 18 | 3.10 | 55.80 |
+| Graminées ornementales | 4 | 24.00 | 96.00 |
+| Terre végétale | 5 | 92.00 | 460.00 |
+| Heures de main-d'oeuvre | 16 | 66.00 | 1'056.00 |
+| **Sous-total massif** |  |  | **2'107.00** |
 
 | Total | CHF |
 | --- | ---: |
-| Before VAT | 15'100.20 |
-| VAT, historical sample rate | 1'162.70 |
-| **Including VAT** | **16'262.90** |
+| [avant TVA, reconstitué] | 15'100.20 |
+| [TVA, taux historique de l'échantillon, reconstitué] | 1'162.72 |
+| **[TVA incluse, reconstitué]** | **16'262.92** |
 
-The source does not state units beside many quantities; units must be inferred from the descriptions.
+**Annotation, unités absentes.** Beaucoup de quantités n'ont pas d'unité écrite malgré le prix unitaire. Les unités ne sont pas inventées à partir de la description.
 
-### Page 2 — closing note
+**Annotation, arrondi de reconstruction.** Avec les montants modifiés et un taux de 7,7 %, la TVA arrondie est 1'162.72 et le total est 16'262.92. Cette relation de calcul appartient à la reconstruction assainie. Elle ne qualifie pas le document source d'incohérent.
 
-The second page contains only a short thank-you sentence and the page number.
+**Annotation, graphie et formatage.** Le document source contient des incohérences d'orthographe et de formatage. Elles sont signalées ici sans recopier de prose ou d'identifiants potentiels. La saisie doit conserver le texte capturé et permettre une correction explicite.
 
-## Modeling evidence
+### Page 2, note de clôture
+
+La seconde page contient seulement une courte formule de remerciement et le numéro de page. La formule est omise car elle n'ajoute aucune information commerciale et pourrait être identifiante.
+
+## Glossaire analytique anglais, non-évidence source
 
 - A short project summary can seed multiple scope sections.
 - Material and labour lines are intermixed.
 - Quantities may omit explicit units despite having unit prices.
 - A nearly empty trailing page is possible.
-- The source includes spelling and formatting inconsistencies that should not prevent capture.
+- Source spelling and formatting inconsistencies must not block capture.

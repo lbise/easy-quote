@@ -1,66 +1,70 @@
-# Interior carpentry renovation Quote
+# Devis de rénovation de menuiserie intérieure
 
-## Provenance
+## Provenance et lecture
 
-Sanitized reconstruction of a 4-page scanned French carpentry/joinery Quote. The scan contains two separately totalled scope sheets followed by sparse terms pages. Amounts are altered. Handwritten signatures are omitted.
+Reconstruction assainie d'un devis français de menuiserie, numérisé sur quatre pages. Le scan contient deux feuilles de portée totalisées séparément, puis deux pages de conditions peu remplies. Les montants sont modifiés. Les signatures manuscrites sont omises.
 
-## Layout reconstruction
+## Reconstruction de mise en page
 
-### Sheet A — ground-floor scope
+### Feuille A, portée du rez-de-chaussée
 
-A single bordered table uses the columns **Description**, **Unit**, **Quantity**, **Unit price**, and **Total**.
+Un seul tableau bordé emploie les colonnes **Libellé**, **Unité**, **Quantité**, **Prix unit.** et **Total**.
 
-| Description | Unit | Qty | Unit price | Amount |
+| Libellé | Unité | Quantité | Prix unit. | Total |
 | --- | --- | ---: | ---: | ---: |
-| Cross-battened ceiling structure | m² | 55.0 | 71.00 | 3'905.00 |
-| Insulation and vapour barrier | m² | 38.5 | 83.00 | 3'195.50 |
-| Install customer-supplied panels | h | 24.0 | 81.00 | 1'944.00 |
-| Supply/install panel base | estimate | 1 | 1'120.00 | 1'120.00 |
-| Finish stairwell opening | item | 1 | 460.00 | 460.00 |
-| Exterior-wall lining assembly | item | 1 | 1'490.00 | 1'490.00 |
-| Repair structural members | package | 1 | 1'520.00 | 1'520.00 |
-| Reuse door leaf; make and install new frame | item | 1 | 880.00 | 880.00 |
-| Repair wall bases with reclaimed material, estimated labour | h | 25.0 | 81.00 | 2'025.00 |
-| Lay parquet, excluding perimeter border | m² | 72.0 | 59.00 | 4'248.00 |
+| Ossature de plafond contre-lattée | m2 | 55.0 | 71.00 | 3'905.00 |
+| Isolation et pare-vapeur | m2 | 38.5 | 83.00 | 3'195.50 |
+| Pose de panneaux fournis par le client | h | 24.0 | 81.00 | 1'944.00 |
+| Fourniture et pose de base de panneaux | est | 1 | 1'120.00 | 1'120.00 |
+| Finition de l'ouverture de cage d'escalier | pce | 1 | 460.00 | 460.00 |
+| Doublage de mur extérieur | pce | 1 | 1'490.00 | 1'490.00 |
+| Réparation d'éléments porteurs | paquet | 1 | 1'520.00 | 1'520.00 |
+| Réemploi de vantail de porte, fabrication et pose d'un nouveau cadre | pce | 1 | 880.00 | 880.00 |
+| Réparation de plinthes avec matériau récupéré, main-d'oeuvre estimée | h | 25.0 | 81.00 | 2'025.00 |
+| Pose de parquet, bordure périphérique non comprise | m2 | 72.0 | 59.00 | 4'248.00 |
 
-The table ends with a printed summary:
+Le tableau se termine par ce récapitulatif imprimé :
 
-| Printed summary | CHF |
+| [récapitulatif imprimé reconstitué] | CHF |
 | --- | ---: |
-| Total before VAT | 20'787.50 |
-| VAT, historical sample rate | 1'600.64 |
-| Total including VAT | 22'388.14 |
-| Handwritten negotiated discount, 3% | -671.64 |
-| **Handwritten revised total** | **21'716.50** |
+| Total HT | 20'787.50 |
+| TVA 7,7% | 1'600.64 |
+| Total TVA incluse | 22'388.14 |
+| [rabais négocié manuscrit, 3 %] | -671.64 |
+| **[total révisé manuscrit]** | **21'716.50** |
 
-Handwritten marks select lines, reject several lines as replaced by new work, and apply the negotiated discount beneath the printed total.
+Des marques manuscrites sélectionnent des lignes, en refusent plusieurs parce qu'elles sont remplacées par de nouveaux travaux et appliquent le rabais négocié sous le total imprimé.
 
-### Page 2 — terms
+**Annotation, unité abrégée.** `est` est le libellé visible dans la colonne Unité de cette ligne. Son sens exact n'est pas établi. Le corpus ne l'étend pas en « estimation ».
 
-A short payment condition offers a percentage reduction for fast payment or a longer net term. A closing sentence and signature occupy the top of an otherwise empty page.
+**Annotation, unités abrégées.** `m2` et `pce` sont conservés tels qu'ils apparaissent dans le scan. La glose analytique les rapproche respectivement du mètre carré et de la pièce, sans remplacer le texte source.
 
-### Sheet B — upper-floor scope
+### Page 2, conditions
 
-The same table structure is reused for a different floor. Lines include ceilings, insulation, customer-supplied panels, partitions, wall linings, door work, repairs using reclaimed material, and parquet. It has its own summary:
+Une courte condition de paiement propose un escompte pour paiement rapide ou un délai net plus long. Une phrase de clôture et une signature occupent le haut d'une page par ailleurs vide. La signature est omise.
 
-| Printed and handwritten summary | CHF |
+### Feuille B, portée de l'étage
+
+Le même tableau est réutilisé pour un autre étage. Les lignes comprennent plafonds, isolation, panneaux fournis par le client, cloisons, doublages, portes, réparations avec matériau récupéré et parquet. Son récapitulatif propre est :
+
+| [récapitulatif imprimé et manuscrit reconstitué] | CHF |
 | --- | ---: |
-| Total before VAT | 14'250.00 |
-| VAT, historical sample rate | 1'097.25 |
-| Printed total including VAT | 15'347.25 |
-| Handwritten negotiated discount, 3% | -460.42 |
-| **Handwritten revised total** | **14'886.83** |
+| Total HT | 14'250.00 |
+| TVA 7,7% | 1'097.25 |
+| Total TVA incluse | 15'347.25 |
+| [rabais négocié manuscrit, 3 %] | -460.42 |
+| **[total révisé manuscrit]** | **14'886.83** |
 
-### Page 4 — repeated terms
+### Page 4, conditions répétées
 
-The same sparse conditions and closing page appears again.
+La même page de conditions et de clôture peu remplie apparaît à nouveau.
 
-## Modeling evidence
+## Glossaire analytique anglais, non-évidence source
 
 - One uploaded file may contain more than one separately totalled Quote or scope sheet.
 - Printed values and handwritten negotiation state coexist.
 - Customer-supplied materials must be explicit.
-- “Estimate” appears in the unit column even though the line has a quantity and amount.
-- Units include m², hours, item, package, and estimate.
+- `est` appears in the unit column even though the line has a quantity and amount; its meaning remains unconfirmed.
+- Visible unit forms include `m2`, `h`, `pce`, and `est`.
 - Selection, rejection, replacement, and negotiated discount need an explicit revision rather than silent overwriting.
 - A two-page document can devote almost one full page to terms and signature whitespace.

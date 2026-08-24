@@ -1,71 +1,71 @@
-# Replacement windows Quote
+# Offre de remplacement de fenêtres
 
-## Provenance
+## Provenance et lecture
 
-Sanitized reconstruction of a 7-page French Quote for custom wood/metal windows and installation. Quantities and amounts are altered; brand and business identifiers are removed.
+Reconstruction assainie d'une offre française de sept pages pour la fabrication et la pose de fenêtres bois-métal sur mesure. Les quantités et montants sont modifiés. Les marques et identifiants d'entreprise sont retirés.
 
-## Layout reconstruction
+## Reconstruction de mise en page
 
-### Page 1 — commercial summary
+### Page 1, récapitulatif commercial
 
-The top of the first page combines Customer and project addresses, Artisan contact, responsible Artisan, Quote number, reference, and date.
+Le haut de la première page associe les adresses du client et du projet, les coordonnées de l'artisan, l'artisan responsable, le numéro d'offre, la référence et la date. Ces éléments identifiants sont remplacés ou omis.
 
-| Summary | CHF |
+| Montant total des positions selon détail ci-joint : | CHF |
 | --- | ---: |
-| Net before VAT, after discount | 44'593.60 |
-| VAT, historical sample rate | 3'433.71 |
-| **Net including VAT** | **48'027.31** |
+| Montant net HT | 44'593.60 |
+| TVA | 3'433.71 |
+| **Montant net TTC** | **48'027.31** |
 
-Summary attributes follow: product system, delivery “to agree,” validity in days, payment deadline, extended warranty, product certification, quality/environment claims, showroom details, and website.
+Les attributs qui suivent comprennent le système de produit, la livraison « à convenir », la validité en jours, le délai de paiement, la garantie prolongée, la certification produit, des affirmations de qualité et d'environnement, ainsi que des informations de showroom et de site. Les coordonnées et l'identité sont omises.
 
-### Page 2 — shared technical specification
+### Page 2, spécification technique commune
 
-A dense specification applies to all later positions:
+Une spécification dense s'applique à toutes les positions suivantes :
 
-- frame and whole-window thermal coefficients;
-- wind, water, and air classifications;
-- acoustic performance;
-- interior wood, finish, and colour;
-- exterior aluminium treatment and colour;
-- triple-glazing composition and gas;
-- spacer, fittings, and handle;
-- removal of old windows, waste, installation, sealant, and interior finishing strips.
+- coefficients thermiques du cadre et de la fenêtre complète ;
+- classifications au vent, à l'eau et à l'air ;
+- performance acoustique ;
+- bois intérieur, finition et couleur ;
+- traitement et couleur de l'aluminium extérieur ;
+- composition et gaz du triple vitrage ;
+- intercalaire, ferrures et poignée ;
+- dépose des anciennes fenêtres, évacuation, pose, mastic et baguettes de finition intérieure.
 
-A colour outside the standard palette is presented as an order-wide surcharge.
+Une couleur hors nuancier standard est présentée comme supplément pour toute la commande.
 
-### Pages 3–5 — product positions
+### Pages 3 à 5, positions produit
 
-Each position combines a miniature product specification and a commercial line.
+Chaque position associe une petite spécification produit à une ligne commerciale.
 
-| Position | Location | Dimensions | Configuration | Qty | Unit price | Amount |
+| [position reconstituée] | [emplacement reconstitué] | [dimensions reconstruites] | [configuration reconstruite] | Qté: | [prix unitaire reconstruit] | Montant: |
 | --- | --- | --- | --- | ---: | ---: | ---: |
-| 1 | East facade | approx. 1,000 × 1,750 mm | two leaves; one tilt-turn | 6 | 5'880.00 | 35'280.00 |
-| 2 | South living room | approx. 1,000 × 2,400 mm | glazed and panelled leaves | 1 | 6'720.00 | 6'720.00 |
-| 3 | Ground-floor WC | approx. 400 × 600 mm | one tilt-turn leaf | 2 | 840.00 | 1'680.00 |
-| 4 | Ground-floor cloakroom | approx. 740 × 800 mm | one tilt-turn leaf | 1 | 970.00 | 970.00 |
-| 5 | Upper-floor shower WC | approx. 400 × 1,000 mm | one tilt-turn leaf | 1 | 950.00 | 950.00 |
-| 6 | Upper-floor north | approx. 720 × 1,900 mm | one side-hung leaf | 1 | 1'590.00 | 1'590.00 |
-| 7 | Site transport and handling | — | fees and handling | 1 | 250.00 | 250.00 |
+| 1 | Façade est | env. 1'000 × 1'750 mm | deux vantaux, un oscillo-battant | 6 | 5'880.00 | 35'280.00 |
+| 2 | Séjour sud | env. 1'000 × 2'400 mm | vantaux vitrés et panneautés | 1 | 6'720.00 | 6'720.00 |
+| 3 | WC du rez-de-chaussée | env. 400 × 600 mm | un vantail oscillo-battant | 2 | 840.00 | 1'680.00 |
+| 4 | Vestiaire du rez-de-chaussée | env. 740 × 800 mm | un vantail oscillo-battant | 1 | 970.00 | 970.00 |
+| 5 | WC douche de l'étage | env. 400 × 1'000 mm | un vantail oscillo-battant | 1 | 950.00 | 950.00 |
+| 6 | Nord de l'étage | env. 720 × 1'900 mm | un vantail à la française | 1 | 1'590.00 | 1'590.00 |
+| 7 | Transport et manutention de chantier | — | frais et manutention | 1 | 250.00 | 250.00 |
 
-Positions contain embedded sketches and detailed frame, opening, glazing, safety, colour, and accessory attributes. Some glazing changes are marked as optional per item.
+Les positions contiennent des croquis et des attributs détaillés de cadre, ouverture, vitrage, sécurité, couleur et accessoires. Certains changements de vitrage sont marqués comme option à la pièce.
 
-### Page 6 — adjustments and terms
+### Page 6, ajustements et conditions
 
-| Adjustment | CHF |
+| [ajustements reconstitués] | CHF |
 | --- | ---: |
-| Gross amount | 47'440.00 |
-| Discount, 6% | -2'846.40 |
-| VAT basis | 44'593.60 |
-| VAT | 3'433.71 |
-| **Net total** | **48'027.31** |
+| [report de page 5 reconstitué] | 47'440.00 |
+| Rabais | -2'846.40 |
+| Montant soumis à la TVA: | 44'593.60 |
+| TVA 7.7% | 3'433.71 |
+| **Total net:** | **48'027.31** |
 
-The page also records total window area, safety-glazing guidance, assumptions, benefits, warranty, and after-sales service.
+Cette page note aussi la surface totale des fenêtres, des conseils de vitrage de sécurité, des hypothèses, avantages, garantie et service après-vente.
 
-### Page 7 — repeated identity
+### Page 7, identité répétée
 
-A sparse final page repeats the Quote identity and lists several branches/showrooms and contact channels.
+Une page finale peu remplie répète l'identité de l'offre et énumère plusieurs succursales, showrooms et canaux de contact. Ces données sont omises.
 
-## Modeling evidence
+## Glossaire analytique anglais, non-évidence source
 
 - Shared technical configuration plus position-specific overrides.
 - Product positions need dimensions, diagrams, configurations, and nested components beyond ordinary price lines.

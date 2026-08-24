@@ -1,78 +1,73 @@
-# Earthworks and drainage Quote
+# Devis de terrassement et drainage
 
-## Provenance
+## Provenance et lecture
 
-Sanitized reconstruction of a 3-page French Quote for excavation and new wastewater/stormwater drainage. Quantities and amounts are altered.
+Reconstruction assainie d'un devis français de trois pages pour des fouilles et un nouveau drainage d'eaux usées et pluviales. Les quantités et montants sont modifiés. Les libellés français ci-dessous conservent la langue source. Les descriptions sont paraphrasées pour l'assainissement.
 
-## Layout reconstruction
+## Reconstruction de mise en page
 
-### Page 1 — summary and acceptance
+### Page 1, récapitulatif et acceptation
 
-- **Artisan Business:** `[ARTISAN BUSINESS]`
-- **Customer:** `[CUSTOMER]`
-- **Quote:** `[QUOTE NUMBER]`
-- **Quote date:** `[DATE]`
-- **Project:** Drainage works at `[PROJECT LOCATION]`
+- **Entreprise artisanale :** `[ENTREPRISE ARTISANALE]`
+- **Client :** `[CLIENT]`
+- **Devis :** `[NUMÉRO DE DEVIS]`
+- **Date du devis :** `[DATE]`
+- **Projet :** Travaux de drainage à `[LIEU DU PROJET]`
 
-**Scope title:** Excavation for new drainage pipes
+**Objet :** Fouilles pour nouvelles canalisations de drainage
 
-| Summary | CHF |
+| [récapitulatif reconstitué] | CHF |
 | --- | ---: |
-| Gross total | 9'180.00 |
-| VAT, historical sample rate | 706.86 |
-| **Total including VAT** | **9'886.86** |
+| [total brut reconstitué] | 9'180.00 |
+| [TVA, taux historique de l'échantillon, reconstituée] | 706.86 |
+| **[total TVA incluse reconstitué]** | **9'886.86** |
 
-Commercial notes appear below the summary:
+Les conditions commerciales sous le récapitulatif disent que les prix unitaires peuvent changer après la date de l'offre, que les délais de matériel sont confirmés à l'adjudication, que les travaux supplémentaires demandés sont facturés en sus, et qu'un acompte peut réserver le matériel pour les commandes importantes.
 
-- unit prices may be adjusted if prices change after the offer date;
-- material lead times are confirmed on award;
-- additional requested work becomes an extra charge;
-- larger orders may require a percentage deposit to reserve materials.
+Une zone d'acceptation détachable demande le lieu, la date et la signature. La signature elle-même est omise.
 
-A detachable acceptance area asks for place, date, and signature.
+### Page 2, travaux chiffrés
 
-### Page 2 — priced work
-
-| Pos. | Description | Unit | Qty | Unit price | Amount |
+| Pos. | Description | Un. | Quantité | Prix | Montant |
 | --- | --- | --- | ---: | ---: | ---: |
-| 1.1 | Site setup, personnel, machines, and tools | lump sum | 1 | — | 820.00 |
-| 1.2 | Municipal excavation authorization and fee | lump sum | 1 | — | 230.00 |
-|  | **Site setup subtotal** |  |  |  | **1'050.00** |
-| 2.1 | Excavate for wastewater pipe, small machine and hand work | m³ | 9.0 | 116.00 | 1'044.00 |
-| 2.2 | Move excavated material with small dumper | m³ | 4.0 | 21.00 | 84.00 |
-| 2.3 | Supply and install plastic drainage pipe | m | 20.0 | 25.00 | 500.00 |
-| 2.4 | Connect to existing municipal pipe | item | 1 | 460.00 | 460.00 |
-| 2.5 | Build inspection chamber with concrete cover | item | 1 | 1'150.00 | 1'150.00 |
-| 2.6 | Supply and place trench sand | m³ | 2.0 | 112.00 | 224.00 |
-| 2.7 | Backfill with material stored on site | m³ | 10.0 | 79.00 | 790.00 |
-| 2.8 | Load and remove surplus material | m³ | 2.0 | 86.00 | 172.00 |
-|  | **Wastewater subtotal** |  |  |  | **4'424.00** |
+| 1.1 | Installation de chantier, personnel, machines et outillage | forfait | 1 | — | 820.00 |
+| 1.2 | Autorisation communale de fouille et émolument | forfait | 1 | — | 230.00 |
+|  | **[sous-total installation de chantier reconstitué]** |  |  |  | **1'050.00** |
+| 2.1 | Fouille pour conduite d'eaux usées, petite machine et travail à la main | m3 | 9.0 | 116.00 | 1'044.00 |
+| 2.2 | Déplacement des déblais avec petit dumper | m3 | 4.0 | 21.00 | 84.00 |
+| 2.3 | Fourniture et pose de conduite de drainage en plastique | m | 20.0 | 25.00 | 500.00 |
+| 2.4 | Raccordement sur conduite communale existante | pce | 1 | 460.00 | 460.00 |
+| 2.5 | Regard avec couvercle en béton | pce | 1 | 1'150.00 | 1'150.00 |
+| 2.6 | Fourniture et mise en place de sable de tranchée | m3 | 2.0 | 112.00 | 224.00 |
+| 2.7 | Remblayage avec matériau stocké sur place | m3 | 10.0 | 79.00 | 790.00 |
+| 2.8 | Chargement et évacuation des matériaux excédentaires | m3 | 2.0 | 86.00 | 172.00 |
+|  | **[sous-total eaux usées reconstitué]** |  |  |  | **4'424.00** |
 
-A second section covers stormwater excavation:
+La seconde rubrique couvre les eaux pluviales :
 
-| Pos. | Description | Unit | Qty | Unit price | Amount |
+| Pos. | Description | Un. | Quantité | Prix | Montant |
 | --- | --- | --- | ---: | ---: | ---: |
-| 3.1 | Excavate for stormwater pipe, small machine and hand work | m³ | 10.0 | 114.00 | 1'140.00 |
-| 3.2 | Move excavated material with small dumper | m³ | 5.0 | 20.00 | 100.00 |
-| 3.3 | Supply and install stormwater pipe | m | 25.0 | 23.00 | 575.00 |
-| 3.4 | Supply and install wind trap | item | as required | — | 340.00 |
-| 3.5 | Build infiltration pit with stone, geotextile, and backfill | item | 1 | 760.00 | 760.00 |
-| 3.6 | Supply and place trench sand | m³ | 2.5 | 112.00 | 280.00 |
-| 3.7 | Backfill with material stored on site | m³ | 4.0 | 74.00 | 296.00 |
-| 3.8 | Load and remove surplus material | m³ | 2.5 | 86.00 | 215.00 |
-|  | **Stormwater subtotal** |  |  |  | **3'706.00** |
+| 3.1 | Fouille pour conduite d'eaux pluviales, petite machine et travail à la main | m3 | 10.0 | 114.00 | 1'140.00 |
+| 3.2 | Déplacement des déblais avec petit dumper | m3 | 5.0 | 20.00 | 100.00 |
+| 3.3 | Fourniture et pose de conduite d'eaux pluviales | m | 25.0 | 23.00 | 575.00 |
+| 3.4 | Fourniture et pose de coupe-vent | pce | par | — | 340.00 |
+| 3.5 | Puits d'infiltration avec pierre, géotextile et remblai | pce | 1 | 760.00 | 760.00 |
+| 3.6 | Fourniture et mise en place de sable de tranchée | m3 | 2.5 | 112.00 | 280.00 |
+| 3.7 | Remblayage avec matériau stocké sur place | m3 | 4.0 | 74.00 | 296.00 |
+| 3.8 | Chargement et évacuation des matériaux excédentaires | m3 | 2.5 | 86.00 | 215.00 |
+|  | **[sous-total eaux pluviales reconstitué]** |  |  |  | **3'706.00** |
 
-The qualitative “as required” quantity is preserved because it cannot be represented as an ordinary decimal quantity.
+**Annotation, quantité incomplète.** `par` est le jeton incomplet lisible dans la cellule Quantité. Son sens n'est pas établi. La reconstruction ne l'étend pas en une expression française ni ne le convertit en nombre.
 
-### Page 3 — carry-forward and total
+### Page 3, report et total
 
-The last section subtotal is carried forward, followed by the gross total. The footer repeats the Artisan Business, page number, Quote number, project reference, and date.
+Le sous-total de la dernière rubrique est reporté, puis le total brut apparaît. Le pied de page répète l'entreprise artisanale, le numéro de page, le numéro de devis, la référence de projet et la date.
 
-## Modeling evidence
+## Glossaire analytique anglais, non-évidence source
 
 - Hierarchical numbered sections and lines.
 - Both lump-sum and measured pricing.
-- A quantity can be qualitative rather than numeric.
+- A quantity cell can contain incomplete source text that must not be coerced to a number.
 - Terms can change effective unit prices after Quote creation.
 - Additional work is explicitly outside the priced scope.
 - Acceptance is represented on the Quote PDF even though digital acceptance is outside the MVP.
