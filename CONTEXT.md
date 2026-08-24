@@ -16,9 +16,17 @@ _Avoid_: Operator, salesperson
 A reusable record of the person or organization for whom an Artisan Business proposes work.
 _Avoid_: Client, buyer
 
+**Customer Note**:
+An explicit, Artisan-confirmed fact or preference about a Customer that may help prepare future Quotes for that Customer.
+_Avoid_: Customer memory, learned preference
+
 **Business Default**:
 A reusable value set by an Artisan Business and copied into new Quotes, such as output language, validity, payment terms, or acceptance instructions.
 _Avoid_: Template setting, global Quote value
+
+**Business Guidance**:
+An explicit, Artisan-confirmed instruction or preference that an Artisan Business may reuse across Quotes.
+_Avoid_: Business memory, learned behavior
 
 **Business Identity Snapshot**:
 The Artisan Business identity, contact information, and VAT status recorded on a Quote independently of later Business changes.
