@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PROTOTYPE - Catalog and pricing behaviour</title>
+  <style>
+    :root { --ink:#26322d; --muted:#65716b; --paper:#fffdfa; --panel:#f3f0e9; --line:#d7d1c5; --accent:#176b55; --warn:#855d00; --danger:#9b382d; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#ebe7de; color:var(--ink); font:15px/1.48 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    main { max-width:1200px; margin:0 auto; padding:28px 20px 64px; }
+    h1,h2,h3 { line-height:1.15; margin:0 0 10px; } h1 { font-size:clamp(27px,4vw,42px); } h2 { margin-top:30px; font-size:22px; } h3 { font-size:16px; }
+    p { margin:8px 0; } small { color:var(--muted); }
+    .intro,.panel,.walkthrough { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:20px; box-shadow:0 2px 8px #5c554512; }
+    .eyebrow { color:var(--accent); font-size:12px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; }
+    .assumptions { columns:2; column-gap:34px; margin:14px 0 0; padding-left:20px; } .assumptions li { break-inside:avoid; margin-bottom:6px; }
+    .notice { margin:16px 0; padding:12px 14px; border-left:5px solid var(--accent); background:#eaf3ee; border-radius:6px; font-weight:650; }
+    .notice.error { border-color:var(--danger); background:#faece9; color:#70291f; }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:14px; } .span-3 { grid-column:span 3; } .span-4 { grid-column:span 4; } .span-6 { grid-column:span 6; } .span-8 { grid-column:span 8; } .span-12 { grid-column:span 12; }
+    .field,.catalog-entry { padding:11px 12px; background:var(--panel); border-radius:8px; } .label { display:block; color:var(--muted); font-size:12px; font-weight:750; letter-spacing:.04em; text-transform:uppercase; } .value { display:block; margin-top:4px; font-weight:700; }
+    .catalog-entry { margin:9px 0; border-left:4px solid var(--accent); } .catalog-entry h3 { margin-bottom:4px; }
+    .badge { display:inline-block; padding:3px 8px; border-radius:999px; background:#deece6; color:#13533f; font-size:12px; font-weight:800; } .badge.queued { background:#fff0c9; color:#765000; } .badge.rejected { background:#f5dddd; color:#7a2e24; } .badge.accepted { background:#dce9e1; color:#25543a; }
+    table { width:100%; border-collapse:collapse; margin:8px 0 16px; } th,td { padding:9px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; } th { color:var(--muted); font-size:12px; letter-spacing:.04em; text-transform:uppercase; } td.money,th.money { text-align:right; white-space:nowrap; }
+    .totals { margin-left:auto; max-width:450px; } .totals tr:last-child { font-size:18px; font-weight:850; }
+    .controls,.tabs { display:flex; flex-wrap:wrap; gap:8px; } button { appearance:none; border:1px solid #bdb6a9; border-radius:7px; background:var(--paper); color:var(--ink); padding:9px 12px; font:inherit; font-weight:700; cursor:pointer; } button:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); } button:disabled { cursor:not-allowed; opacity:.5; } button.primary { background:var(--accent); border-color:var(--accent); color:#fff; } .tabs { margin-bottom:12px; } .tabs button.active { color:#fff; background:var(--ink); border-color:var(--ink); }
+    .steps { display:grid; gap:9px; margin-top:14px; } .step { display:flex; align-items:center; gap:12px; padding:10px; background:var(--panel); border-radius:8px; } .step.done { opacity:.55; } .step.current { outline:2px solid var(--accent); } .step-number { display:grid; place-items:center; flex:none; width:28px; height:28px; border-radius:50%; background:var(--ink); color:#fff; font-weight:800; } .step button { margin-left:auto; min-width:145px; }
+    .history { list-style:none; margin:0; padding:0; } .history li { padding:9px 0; border-bottom:1px solid var(--line); } .history li:last-child { border:0; } .empty { padding:15px 0; color:var(--muted); font-style:italic; }
+    details { margin-top:14px; } summary { cursor:pointer; font-weight:750; }
+    @media (max-width:800px) { .assumptions { columns:1; } .span-3,.span-4,.span-6,.span-8 { grid-column:span 12; } table { font-size:13px; } th,td { padding:7px 4px; } .step { align-items:flex-start; flex-wrap:wrap; } .step button { width:100%; } }
+  </style>
+</head>
+<body>
+<main>
+  <section class="intro">
+    <div class="eyebrow">PROTOTYPE · Throwaway logic, not production</div>
+    <h1>Should an optional catalog stay separate from Quote prices?</h1>
+    <p>This click-through asks whether an Artisan can draft without a catalog, reuse one generic catalog-entry shape when it helps, and keep every Quote line and Quote Revision as an editable or preserved snapshot rather than a live catalog reference.</p>
+    <p><strong>Proposed boundary to challenge:</strong> the Business Catalog is useful reusable content, not a pricing authority. Saving or updating catalog content always needs the Artisan's explicit acceptance. The two possible suggestion timings are visible below.</p>
+    <ul class="assumptions">
+      <li>Quote creation works when the Business Catalog is empty or switched off.</li>
+      <li>One generic entry shape covers labor, materials, and fixed work. Trade words live in editable description, detail, category, and search terms.</li>
+      <li>An entry has description, optional detail, category, search terms, unit, pricing mode, and an optional default price. It has no VAT, currency, supplier account, or trade type.</li>
+      <li>CHF and VAT treatment belong to the Quote and Artisan Business, never to a catalog entry.</li>
+      <li>Adding an entry copies its content into a Quote line. Editing the Quote line never changes the catalog, and later catalog changes never rewrite existing lines or published Quote Revisions.</li>
+      <li>An ad-hoc confirmed line or a meaningful price override can create a visible save or update suggestion. Rejecting it changes nothing.</li>
+      <li>The Artisan may receive a suggestion right after confirming a line, or collect it for a quieter review. This prototype does not choose between those timings.</li>
+      <li>VAT, discounts, and levies are Quote calculation controls. They are not catalog entries disguised as work or materials.</li>
+      <li>Default prices are optional and are not evidence of a stable supplier price. The Artisan confirms every Quote price.</li>
+    </ul>
+  </section>
+
+  <div id="notice" class="notice">Loaded a sample Business Catalog and an empty Quote. Try a walkthrough or use free play.</div>
+
+  <h2>Current state</h2>
+  <section id="state" class="panel"></section>
+
+  <h2>Free play</h2>
+  <section class="panel"><p>Every button performs one domain action. A refused action leaves the state alone and says why.</p><div id="free-play" class="controls"></div></section>
+
+  <h2>Guided walkthroughs</h2>
+  <div id="tabs" class="tabs"></div>
+  <section id="walkthrough" class="walkthrough"></section>
+</main>
+
+<script>
+// CATALOG AND PRICING PROTOTYPE - pure domain module. It has no DOM dependency.
+const CatalogPricingModel = (() => {
+  const copy = value => JSON.parse(JSON.stringify(value));
+  const round = value => Math.round(value);
+
+  const entry = (id, description, detail, category, searchTerms, unit, pricingMode, defaultPrice) => ({
+    id, description, detail: detail || null, category: category || null, searchTerms, unit,
+    pricingMode, defaultPrice: defaultPrice == null ? null : round(defaultPrice)
+  });
+  const lineFromEntry = (catalogEntry, id) => ({
+    id, origin: { kind:"catalog", entryId:catalogEntry.id }, description:catalogEntry.description,
+    detail:catalogEntry.detail, category:catalogEntry.category, searchTerms:copy(catalogEntry.searchTerms),
+    unit:catalogEntry.unit, pricingMode:catalogEntry.pricingMode, quantity:1,
+    price:catalogEntry.defaultPrice, priceSource:catalogEntry.defaultPrice == null ? "needs Artisan price" : "catalog default copied",
+    sourceSnapshot:copy(catalogEntry)
+  });
+  const adHocLine = (id, description, unit, pricingMode, quantity, price) => ({
+    id, origin:{ kind:"ad_hoc", entryId:null }, description, detail:null, category:null, searchTerms:[], unit, pricingMode, quantity,
+    price, priceSource:"Artisan entered", sourceSnapshot:null
+  });
+  const catalogEntries = () => [
+    entry("CAT-PAINT", "Interior paintwork", "Prepare and paint interior walls", "finishing", ["paint", "interior", "walls"], "h", "per unit", 8500),
+    entry("CAT-PRIMER", "Bonding primer", "Technical product choice stays editable text", "materials", ["primer", "paint preparation"], "litre", "per unit", null),
+    entry("CAT-REPAIR", "Window reveal repair", "Fixed work with small materials included", "repair", ["window", "reveal", "repair"], "package", "fixed amount", 48000),
+    entry("CAT-PAINT-NEAR", "Interior paintwork, preparation and finish", "Similar wording, deliberately a separate reusable entry", "finishing", ["paint", "interior", "preparation"], "m²", "per unit", 4200)
+  ];
+  const catalogDraft = () => ({
+    catalog:{ enabled:true, entries:catalogEntries() },
+    quote:{ number:"2026-0051", currency:"CHF", vat:{ treatment:"added", rateBasisPoints:810 }, lines:[], adjustments:[], revisions:[] },
+    suggestionTiming:"immediate", suggestions:[], history:["New Quote created. It has no catalog lines yet."]
+  });
+  const noCatalogDraft = () => ({
+    catalog:{ enabled:false, entries:[] },
+    quote:{ number:"2026-0052", currency:"CHF", vat:{ treatment:"added", rateBasisPoints:810 }, lines:[], adjustments:[], revisions:[] },
+    suggestionTiming:"immediate", suggestions:[], history:["New Quote created with no Business Catalog."]
+  });
+  const findEntry = (state, id) => state.catalog.entries.find(item => item.id === id);
+  const nextLineId = state => `LINE-${state.quote.lines.length + 1}`;
+  const nextSuggestionId = state => `SUG-${state.suggestions.length + 1}`;
+  const note = (state, message) => { state.history.push(message); return state; };
+  const meaningfulSuggestion = (state, suggestion) => {
+    suggestion.status = state.suggestionTiming === "immediate" ? "offered" : "queued";
+    state.suggestions.push(suggestion);
+    return suggestion.status === "offered" ? "Suggestion is offered now." : "Suggestion is queued for review.";
+  };
+  const lineAmount = item => item.price == null ? 0 : round(item.quantity * item.price);
+  const calculate = quote => {
+    const workSubtotal = quote.lines.reduce((sum, item) => sum + lineAmount(item), 0);
+    const apply = (running, adjustment) => {
+      const amount = adjustment.kind === "percent" ? round(running * adjustment.rateBasisPoints / 10000) : adjustment.amount;
+      return { ...adjustment, amount, resultingTotal:running + amount };
+    };
+    let running = workSubtotal;
+    const beforeVat = quote.adjustments.filter(item => item.stage === "before VAT").map(item => { const applied = apply(running, item); running = applied.resultingTotal; return applied; });
+    const vatBasis = running;
+    const vat = quote.vat.treatment === "added" ? round(vatBasis * quote.vat.rateBasisPoints / 10000) : 0;
+    running += vat;
+    const afterVat = quote.adjustments.filter(item => item.stage === "after VAT").map(item => { const applied = apply(running, item); running = applied.resultingTotal; return applied; });
+    return { workSubtotal, beforeVat, vatBasis, vat, afterVat, total:running };
+  };
+  const quoteSnapshot = quote => copy({ lines:quote.lines, adjustments:quote.adjustments, currency:quote.currency, vat:quote.vat, calculation:calculate(quote) });
+
+  const reduce = (original, action) => {
+    const state = copy(original);
+    switch (action.type) {
+      case "LOAD_CATALOG": return catalogDraft();
+      case "LOAD_NO_CATALOG": return noCatalogDraft();
+      case "ENABLE_AND_CREATE_ENTRY": {
+        state.catalog.enabled = true;
+        state.catalog.entries.push(entry("CAT-NEW", "Site protection and dust barrier", "Created incrementally from this draft", "site work", ["protection", "dust"], "package", "fixed amount", null));
+        return note(state, "A new unpriced catalog entry was created. The existing Quote still works either way.");
+      }
+      case "ADD_PAINT": {
+        const item = findEntry(state, "CAT-PAINT"); if (!item) throw new Error("The paintwork entry is not in this Business Catalog.");
+        state.quote.lines.push(lineFromEntry(item, nextLineId(state)));
+        return note(state, "Catalog entry copied into a new editable Quote line at its current default price.");
+      }
+      case "ADD_PAINT_AGAIN": {
+        const item = findEntry(state, "CAT-PAINT"); if (!item) throw new Error("The paintwork entry is not in this Business Catalog.");
+        const line = lineFromEntry(item, nextLineId(state)); line.quantity = 4; state.quote.lines.push(line);
+        return note(state, "The same catalog entry was reused for another Quote line. Each line has its own snapshot.");
+      }
+      case "ADD_NEAR_DUPLICATE": {
+        const item = findEntry(state, "CAT-PAINT-NEAR"); if (!item) throw new Error("The near-duplicate entry is not in this Business Catalog.");
+        const line = lineFromEntry(item, nextLineId(state)); line.quantity = 30; state.quote.lines.push(line);
+        return note(state, "A similar but separate catalog entry was reused. The model does not guess that it is the same work.");
+      }
+      case "ADD_FIXED_WORK": {
+        const item = findEntry(state, "CAT-REPAIR"); if (!item) throw new Error("The fixed-work entry is not in this Business Catalog.");
+        state.quote.lines.push(lineFromEntry(item, nextLineId(state)));
+        return note(state, "Fixed-price work copied as a generic catalog entry, without a trade-specific type.");
+      }
+      case "ADD_UNPRICED_MATERIAL": {
+        const item = findEntry(state, "CAT-PRIMER"); if (!item) throw new Error("The unpriced material entry is not in this Business Catalog.");
+        const line = lineFromEntry(item, nextLineId(state)); line.quantity = 12; state.quote.lines.push(line);
+        return note(state, "An entry with no default price was added. This Quote line needs an Artisan price before it contributes to the total.");
+      }
+      case "SET_UNPRICED_LINE_PRICE": {
+        const item = state.quote.lines.find(line => line.price == null); if (!item) throw new Error("There is no unpriced Quote line.");
+        item.price = 1800; item.priceSource = "Artisan entered for this Quote";
+        return note(state, "The Artisan set CHF 18.00 per litre in this Quote. The catalog entry remains unpriced.");
+      }
+      case "ADD_AD_HOC": {
+        const line = adHocLine(nextLineId(state), "Temporary protection for occupied rooms", "package", "fixed amount", 1, 36000);
+        state.quote.lines.push(line);
+        const timing = meaningfulSuggestion(state, { id:nextSuggestionId(state), kind:"save new catalog entry", lineId:line.id, targetEntryId:null, proposed:copy(line), status:null });
+        return note(state, `Ad-hoc line confirmed. ${timing}`);
+      }
+      case "OVERRIDE_FIRST_CATALOG_PRICE": {
+        const item = state.quote.lines.find(line => line.origin.kind === "catalog"); if (!item) throw new Error("Add a catalog line before overriding its Quote price.");
+        const oldPrice = item.price; item.price = (item.price || 0) + 1000; item.priceSource = "Artisan override for this Quote";
+        const timing = meaningfulSuggestion(state, { id:nextSuggestionId(state), kind:"update catalog default price", lineId:item.id, targetEntryId:item.origin.entryId, proposed:{ price:item.price, previousPrice:oldPrice, description:item.description }, status:null });
+        return note(state, `Quote price changed by CHF 10.00. ${timing} The catalog has not changed.`);
+      }
+      case "CHANGE_SUPPLIER_PRICE": {
+        const item = findEntry(state, "CAT-PAINT"); if (!item) throw new Error("The paintwork entry is not in this Business Catalog.");
+        item.defaultPrice = 9200;
+        return note(state, "Supplier information changed the catalog default to CHF 92.00. Existing Quote lines and revisions keep their snapshots.");
+      }
+      case "EDIT_CATALOG_WORDING": {
+        const item = findEntry(state, "CAT-PAINT"); if (!item) throw new Error("The paintwork entry is not in this Business Catalog.");
+        item.detail = "Prepare, prime where needed, and paint interior walls";
+        return note(state, "Catalog wording changed. Existing Quote lines and revisions keep their copied wording.");
+      }
+      case "SET_IMMEDIATE": state.suggestionTiming = "immediate"; return note(state, "Future meaningful suggestions will be offered after each confirmed line.");
+      case "SET_QUIET_REVIEW": state.suggestionTiming = "quiet review"; return note(state, "Future meaningful suggestions will wait for the quieter review point.");
+      case "OFFER_QUEUED": {
+        const queued = state.suggestions.filter(item => item.status === "queued"); if (!queued.length) throw new Error("There are no queued suggestions to review.");
+        queued.forEach(item => { item.status = "offered"; }); return note(state, `${queued.length} queued suggestion(s) are now offered for an Artisan decision.`);
+      }
+      case "ACCEPT_OFFERED": {
+        const suggestion = state.suggestions.find(item => item.status === "offered"); if (!suggestion) throw new Error("There is no offered suggestion to accept.");
+        if (suggestion.kind === "save new catalog entry") {
+          const proposed = suggestion.proposed;
+          state.catalog.enabled = true;
+          state.catalog.entries.push(entry(`CAT-SAVED-${state.catalog.entries.length + 1}`, proposed.description, proposed.detail, proposed.category, proposed.searchTerms, proposed.unit, proposed.pricingMode, proposed.price));
+          note(state, "Artisan accepted a new reusable catalog entry copied from the ad-hoc Quote line.");
+        } else {
+          const target = findEntry(state, suggestion.targetEntryId); if (!target) throw new Error("The suggested catalog entry no longer exists.");
+          target.defaultPrice = suggestion.proposed.price;
+          note(state, "Artisan accepted the new catalog default price. Older Quote snapshots remain unchanged.");
+        }
+        suggestion.status = "accepted"; return state;
+      }
+      case "REJECT_OFFERED": {
+        const suggestion = state.suggestions.find(item => item.status === "offered"); if (!suggestion) throw new Error("There is no offered suggestion to reject.");
+        suggestion.status = "rejected";
+        return note(state, "Artisan rejected the suggestion. No catalog entry or default price changed.");
+      }
+      case "ADD_WASTE_LEVY": {
+        if (state.quote.adjustments.some(item => item.id === "waste-levy")) throw new Error("The waste levy is already an explicit Quote adjustment.");
+        state.quote.adjustments.push({ id:"waste-levy", label:"Waste and VOC levy", kind:"percent", rateBasisPoints:150, stage:"before VAT" });
+        return note(state, "A 1.5% levy was added before VAT as a Quote adjustment, not a catalog line.");
+      }
+      case "ADD_AFTER_VAT_DISCOUNT": {
+        if (state.quote.adjustments.some(item => item.id === "after-vat-discount")) throw new Error("The after-VAT discount is already explicit.");
+        state.quote.adjustments.push({ id:"after-vat-discount", label:"Customer's requested 10% discount on VAT-inclusive total", kind:"percent", rateBasisPoints:-1000, stage:"after VAT" });
+        return note(state, "The awkward after-VAT discount is explicit. It is not silently moved before VAT or turned into a catalog entry.");
+      }
+      case "PUBLISH": {
+        if (!state.quote.lines.length) throw new Error("Add at least one Quote line before publishing.");
+        if (state.quote.lines.some(item => item.price == null)) throw new Error("Every Quote line needs an Artisan-confirmed price before this fixed-price Quote can publish.");
+        state.quote.revisions.push({ number:state.quote.revisions.length + 1, snapshot:quoteSnapshot(state.quote) });
+        return note(state, `Quote Revision ${state.quote.revisions.length} published. Its line and calculation snapshots are preserved.`);
+      }
+      default: throw new Error(`Unknown action: ${action.type}`);
+    }
+  };
+  return { catalogDraft, noCatalogDraft, calculate, lineAmount, reduce };
+})();
+</script>
+
+<script>
+// Throwaway page shell. It renders state and calls the pure module above.
+const actions = [
+  ["LOAD_CATALOG", "Load sample Business Catalog"], ["LOAD_NO_CATALOG", "Start Quote with no catalog"], ["ENABLE_AND_CREATE_ENTRY", "Create an unpriced catalog entry"],
+  ["ADD_PAINT", "Add catalog paintwork"], ["ADD_PAINT_AGAIN", "Reuse catalog paintwork"], ["ADD_NEAR_DUPLICATE", "Add similar paintwork entry"], ["ADD_FIXED_WORK", "Add fixed-price work"], ["ADD_UNPRICED_MATERIAL", "Add unpriced material"], ["SET_UNPRICED_LINE_PRICE", "Set unpriced line to CHF 18.00"],
+  ["ADD_AD_HOC", "Add confirmed ad-hoc line"], ["OVERRIDE_FIRST_CATALOG_PRICE", "Override first catalog line by CHF 10.00"], ["CHANGE_SUPPLIER_PRICE", "Change catalog paint default to CHF 92.00"], ["EDIT_CATALOG_WORDING", "Edit catalog paint wording"],
+  ["SET_IMMEDIATE", "Offer suggestions per line"], ["SET_QUIET_REVIEW", "Queue suggestions for review"], ["OFFER_QUEUED", "Open queued suggestions"], ["ACCEPT_OFFERED", "Accept offered suggestion"], ["REJECT_OFFERED", "Reject offered suggestion"],
+  ["ADD_WASTE_LEVY", "Add 1.5% levy before VAT"], ["ADD_AFTER_VAT_DISCOUNT", "Add 10% discount after VAT"], ["PUBLISH", "Publish Quote Revision"]
+];
+const walkthroughs = [
+  { name:"Quote without a catalog", description:"A new Quote should not wait for catalog setup. Add an ad-hoc line, then create an optional entry only if the Artisan chooses to reuse it.", start:"LOAD_NO_CATALOG", steps:[["ADD_AD_HOC", "Confirm an ad-hoc fixed-price line"],["REJECT_OFFERED", "Reject the save suggestion"],["ENABLE_AND_CREATE_ENTRY", "Create an unpriced entry later"],["PUBLISH", "Publish the Quote without using the catalog"]] },
+  { name:"Snapshot versus supplier change", description:"A changed supplier price must affect only future use of a catalog entry. Watch the existing Quote line and its published revision stay at CHF 85.00 while a later line copies CHF 92.00.", start:"LOAD_CATALOG", steps:[["ADD_PAINT", "Add paintwork at CHF 85.00"],["PUBLISH", "Publish Revision 1"],["CHANGE_SUPPLIER_PRICE", "Change catalog default to CHF 92.00"],["EDIT_CATALOG_WORDING", "Edit catalog wording"],["ADD_PAINT_AGAIN", "Reuse it in a later line"],["PUBLISH", "Publish Revision 2"]] },
+  { name:"When should reuse be suggested?", description:"This compares the two timing choices. An ad-hoc line queues its save suggestion for a quieter review, then the Artisan explicitly accepts it.", start:"LOAD_CATALOG", steps:[["SET_QUIET_REVIEW", "Choose quiet review timing"],["ADD_AD_HOC", "Confirm an ad-hoc line"],["OFFER_QUEUED", "Open the review point"],["ACCEPT_OFFERED", "Accept the new catalog entry"]] },
+  { name:"Reject a catalog price update", description:"A Quote price override can propose a new default. Reject it and check that the catalog still says CHF 85.00 while the Quote line remains CHF 95.00.", start:"LOAD_CATALOG", steps:[["ADD_PAINT", "Copy paintwork into the Quote"],["OVERRIDE_FIRST_CATALOG_PRICE", "Set this Quote line to CHF 95.00"],["REJECT_OFFERED", "Reject the proposed catalog update"],["PUBLISH", "Publish the independent Quote snapshot"]] },
+  { name:"Mixed units and similar entries", description:"Try a fixed package, an unpriced material sold by litre, the same labor entry twice, and a near-duplicate per-square-metre entry. None need a trade-specific model.", start:"LOAD_CATALOG", steps:[["ADD_FIXED_WORK", "Add fixed repair work"],["ADD_UNPRICED_MATERIAL", "Add primer with no default price"],["SET_UNPRICED_LINE_PRICE", "Set the Quote's primer price"],["ADD_PAINT", "Add hourly paintwork"],["ADD_PAINT_AGAIN", "Reuse hourly paintwork"],["ADD_NEAR_DUPLICATE", "Add similar per-square-metre paintwork"]] },
+  { name:"The awkward VAT discount", description:"The customer requests a 10% reduction after VAT, while a 1.5% levy belongs before VAT. The calculation exposes that unusual order instead of hiding either item in catalog work.", start:"LOAD_CATALOG", steps:[["ADD_PAINT", "Add priced work"],["ADD_FIXED_WORK", "Add fixed work"],["ADD_WASTE_LEVY", "Add levy before VAT"],["ADD_AFTER_VAT_DISCOUNT", "Add requested discount after VAT"],["PUBLISH", "Publish the exact calculation"]] }
+];
+let state = CatalogPricingModel.catalogDraft();
+let activeWalkthrough = 0;
+let activeStep = 0;
+const francs = value => new Intl.NumberFormat("fr-CH", { style:"currency", currency:"CHF" }).format(value / 100);
+const escapeHtml = value => String(value == null ? "" : value).replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#039;" }[char]));
+const price = value => value == null ? "Needs Artisan price" : francs(value);
+const statusClass = value => value === "queued" ? "queued" : value === "rejected" ? "rejected" : value === "accepted" ? "accepted" : "";
+
+function render() {
+  const calc = CatalogPricingModel.calculate(state.quote);
+  const catalogHtml = state.catalog.entries.length ? state.catalog.entries.map(item => `<article class="catalog-entry"><h3>${escapeHtml(item.description)} <small>${escapeHtml(item.id)}</small></h3><div class="grid"><div class="span-3"><span class="label">Detail</span><span>${escapeHtml(item.detail || "None")}</span></div><div class="span-3"><span class="label">Category</span><span>${escapeHtml(item.category || "None")}</span></div><div class="span-3"><span class="label">Search terms</span><span>${escapeHtml(item.searchTerms.join(", ") || "None")}</span></div><div class="span-3"><span class="label">Unit / price</span><span>${escapeHtml(item.unit)} · ${escapeHtml(item.pricingMode)}<br>${price(item.defaultPrice)} default</span></div></div></article>`).join("") : `<p class="empty">No catalog entries. The Quote can still be drafted and published.</p>`;
+  const linesHtml = state.quote.lines.length ? state.quote.lines.map(item => `<tr><td><strong>${escapeHtml(item.description)}</strong><br><small>${escapeHtml(item.detail || "No technical detail")}</small></td><td>${escapeHtml(item.origin.kind === "catalog" ? `Catalog snapshot ${item.origin.entryId}` : "Ad-hoc Quote line")}</td><td>${escapeHtml(item.quantity)} ${escapeHtml(item.unit)}<br><small>${escapeHtml(item.pricingMode)}</small></td><td class="money">${price(item.price)}<br><small>${escapeHtml(item.priceSource)}</small></td><td class="money">${item.price == null ? "Not calculated" : francs(CatalogPricingModel.lineAmount(item))}</td></tr>`).join("") : `<tr><td colspan="5" class="empty">No Quote lines yet.</td></tr>`;
+  const suggestionsHtml = state.suggestions.length ? state.suggestions.map(item => `<li><span class="badge ${statusClass(item.status)}">${escapeHtml(item.status)}</span> <strong>${escapeHtml(item.kind)}</strong> for ${escapeHtml(item.proposed.description || "catalog price")}${item.kind === "update catalog default price" ? `, ${francs(item.proposed.previousPrice)} to ${francs(item.proposed.price)}` : `, proposed default ${price(item.proposed.price)}`}<br><small>Suggestion ${escapeHtml(item.id)}. It changes the catalog only if accepted.</small></li>`).join("") : `<li class="empty">No save or update suggestions.</li>`;
+  const revisionsHtml = state.quote.revisions.length ? state.quote.revisions.map(revision => `<li><strong>Revision ${revision.number}</strong> · ${francs(revision.snapshot.calculation.total)} · ${revision.snapshot.lines.length} preserved line(s)<details><summary>Show preserved line and calculation snapshot</summary><table><thead><tr><th>Line</th><th>Origin</th><th>Quantity / unit</th><th class="money">Price</th><th class="money">Amount</th></tr></thead><tbody>${revision.snapshot.lines.map(line => `<tr><td>${escapeHtml(line.description)}<br><small>${escapeHtml(line.detail || "No technical detail")}</small></td><td>${escapeHtml(line.origin.kind === "catalog" ? `Catalog snapshot ${line.origin.entryId}` : "Ad-hoc Quote line")}</td><td>${escapeHtml(line.quantity)} ${escapeHtml(line.unit)}</td><td class="money">${price(line.price)}</td><td class="money">${line.price == null ? "Not calculated" : francs(CatalogPricingModel.lineAmount(line))}</td></tr>`).join("")}</tbody></table><p><small>VAT: ${revision.snapshot.vat.treatment} ${revision.snapshot.vat.rateBasisPoints / 100}% · adjustments: ${escapeHtml(revision.snapshot.adjustments.map(item => `${item.label} ${item.stage}`).join("; ") || "none")}</small></p></details></li>`).join("") : `<li class="empty">No published Quote Revision.</li>`;
+  document.querySelector("#state").innerHTML = `
+    <div class="grid"><div class="field span-3"><span class="label">Quote</span><span class="value">${escapeHtml(state.quote.number)}</span></div><div class="field span-3"><span class="label">Currency</span><span class="value">${escapeHtml(state.quote.currency)} at Quote level</span></div><div class="field span-3"><span class="label">VAT treatment</span><span class="value">${escapeHtml(state.quote.vat.treatment)} ${state.quote.vat.rateBasisPoints / 100}% at Quote level</span></div><div class="field span-3"><span class="label">Suggestion timing</span><span class="value">${escapeHtml(state.suggestionTiming)}</span></div></div>
+    <h3 style="margin-top:22px">Business Catalog ${state.catalog.enabled ? "is available" : "is not set up"}</h3><p><small>Every entry has the same generic shape. Labor, materials, and fixed work are wording and pricing-mode choices, not different models.</small></p>${catalogHtml}
+    <h3 style="margin-top:24px">Working Quote lines</h3><table><thead><tr><th>Description and detail</th><th>Origin</th><th>Quantity and unit</th><th class="money">Quote price</th><th class="money">Line amount</th></tr></thead><tbody>${linesHtml}</tbody></table>
+    <h3>Quote calculation controls</h3><p><small>These controls are separate from the Business Catalog. They make VAT, discounts, and levies visible.</small></p><table class="totals"><tbody><tr><td>Priced work subtotal</td><td class="money">${francs(calc.workSubtotal)}</td></tr>${calc.beforeVat.map(item => `<tr><td>${escapeHtml(item.label)} <small>before VAT</small></td><td class="money">${francs(item.amount)}</td></tr>`).join("")}<tr><td>VAT basis</td><td class="money">${francs(calc.vatBasis)}</td></tr><tr><td>VAT ${state.quote.vat.rateBasisPoints / 100}%</td><td class="money">${francs(calc.vat)}</td></tr>${calc.afterVat.map(item => `<tr><td>${escapeHtml(item.label)} <small>after VAT</small></td><td class="money">${francs(item.amount)}</td></tr>`).join("")}<tr><td>Quote total</td><td class="money">${francs(calc.total)}</td></tr></tbody></table>
+    <div class="grid"><div class="span-6"><h3>Save and update suggestions</h3><ul class="history">${suggestionsHtml}</ul></div><div class="span-6"><h3>Published Quote Revisions</h3><ul class="history">${revisionsHtml}</ul></div><div class="span-12"><h3>Action history</h3><ul class="history">${state.history.slice().reverse().map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div></div>`;
+}
+function showNotice(message, error) { const element = document.querySelector("#notice"); element.textContent = message; element.classList.toggle("error", error); }
+function dispatch(type, fromWalkthrough) {
+  try { state = CatalogPricingModel.reduce(state, { type }); const action = actions.find(item => item[0] === type); showNotice(`${action ? action[1] : type}. See the complete state below.`, false); if (fromWalkthrough) activeStep += 1; }
+  catch (error) { showNotice(`Refused: ${error.message}`, true); }
+  render(); renderWalkthrough();
+}
+function renderFreePlay() {
+  document.querySelector("#free-play").innerHTML = actions.map(([type, label], index) => `<button class="${index < 2 ? "primary" : ""}" data-action="${type}">${escapeHtml(label)}</button>`).join("");
+  document.querySelectorAll("#free-play button").forEach(button => button.addEventListener("click", () => dispatch(button.dataset.action, false)));
+}
+function startWalkthrough(index) { activeWalkthrough = index; activeStep = 0; state = CatalogPricingModel.reduce(state, { type:walkthroughs[index].start }); showNotice(`Walkthrough started: ${walkthroughs[index].name}.`, false); render(); renderTabs(); renderWalkthrough(); }
+function renderTabs() {
+  document.querySelector("#tabs").innerHTML = walkthroughs.map((item, index) => `<button class="${index === activeWalkthrough ? "active" : ""}" data-tab="${index}">${escapeHtml(item.name)}</button>`).join("");
+  document.querySelectorAll("#tabs button").forEach(button => button.addEventListener("click", () => startWalkthrough(Number(button.dataset.tab))));
+}
+function renderWalkthrough() {
+  const item = walkthroughs[activeWalkthrough];
+  document.querySelector("#walkthrough").innerHTML = `<h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p><button data-restart>Restart this walkthrough</button><div class="steps">${item.steps.map(([type, label], index) => `<div class="step ${index < activeStep ? "done" : index === activeStep ? "current" : ""}"><span class="step-number">${index + 1}</span><span>${escapeHtml(label)}</span><button ${index === activeStep ? "" : "disabled"} data-step="${type}">${index < activeStep ? "Done" : index === activeStep ? "Do this" : "Waiting"}</button></div>`).join("")}</div>${activeStep >= item.steps.length ? `<p class="notice">Walkthrough complete. Which assumption feels wrong?</p>` : ""}`;
+  document.querySelector("[data-restart]").addEventListener("click", () => startWalkthrough(activeWalkthrough));
+  const button = document.querySelector("[data-step]:not([disabled])"); if (button) button.addEventListener("click", () => dispatch(button.dataset.step, true));
+}
+renderFreePlay(); renderTabs(); renderWalkthrough(); render();
+</script>
+</body>
+</html>
