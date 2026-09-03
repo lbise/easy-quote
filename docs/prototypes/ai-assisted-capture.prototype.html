@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PROTOTYPE - AI-assisted capture</title>
+  <style>
+    :root { --ink:#24302b; --muted:#64706b; --paper:#fffdfa; --panel:#f4f1ea; --line:#d8d3c8; --accent:#166b53; --danger:#a13b2d; --warning:#795500; --ok:#246b42; }
+    * { box-sizing:border-box; } body { margin:0; color:var(--ink); background:#eae6dd; font:15px/1.48 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    main { max-width:1180px; margin:0 auto; padding:28px 20px 64px; } h1,h2,h3 { line-height:1.16; margin:0 0 10px; } h1 { font-size:clamp(26px,4vw,42px); } h2 { margin-top:30px; font-size:22px; } h3 { font-size:16px; } p { margin:8px 0; } small { color:var(--muted); }
+    .intro,.panel,.walkthrough { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:20px; box-shadow:0 2px 8px #5c554512; } .eyebrow { color:var(--accent); font-size:12px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; }
+    .assumptions { columns:2; column-gap:34px; margin:14px 0 0; padding-left:20px; } .assumptions li { break-inside:avoid; margin-bottom:6px; }
+    .notice { margin:16px 0; padding:12px 14px; border-left:5px solid var(--accent); background:#eaf3ee; border-radius:6px; font-weight:650; } .notice.error { border-color:var(--danger); background:#faece9; color:#70291f; } .notice.warning { border-color:var(--warning); background:#fff7db; color:#674a00; }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:14px; } .span-3 { grid-column:span 3; } .span-4 { grid-column:span 4; } .span-6 { grid-column:span 6; } .span-8 { grid-column:span 8; } .span-12 { grid-column:span 12; }
+    .field { min-height:66px; padding:11px 12px; background:var(--panel); border-radius:8px; } .label { display:block; color:var(--muted); font-size:12px; font-weight:750; letter-spacing:.04em; text-transform:uppercase; } .value { display:block; margin-top:4px; font-weight:700; }
+    .badge { display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; font-weight:800; background:#ddece6; color:#12533f; } .badge.warning { background:#fff0c9; color:#754f00; } .badge.error { background:#fae4df; color:#8b2b1e; } .badge.muted { background:#e4e6e5; color:#515b57; }
+    table { width:100%; border-collapse:collapse; margin:8px 0 16px; } th,td { padding:9px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; } th { color:var(--muted); font-size:12px; letter-spacing:.04em; text-transform:uppercase; } td.money,th.money { text-align:right; white-space:nowrap; }
+    .controls,.tabs { display:flex; flex-wrap:wrap; gap:8px; } button { appearance:none; border:1px solid #bdb6a9; border-radius:7px; background:var(--paper); color:var(--ink); padding:8px 11px; font:inherit; font-weight:700; cursor:pointer; } button:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); } button:disabled { cursor:not-allowed; opacity:.5; } button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .tabs { margin-bottom:12px; } .tabs button.active { color:#fff; background:var(--ink); border-color:var(--ink); } .steps { display:grid; gap:9px; margin-top:14px; } .step { display:flex; align-items:center; gap:12px; padding:10px; background:var(--panel); border-radius:8px; } .step.done { opacity:.55; } .step.current { outline:2px solid var(--accent); } .step-number { display:grid; place-items:center; flex:none; width:28px; height:28px; border-radius:50%; background:var(--ink); color:#fff; font-weight:800; } .step button { margin-left:auto; min-width:150px; }
+    .history { list-style:none; margin:0; padding:0; } .history li { padding:8px 0; border-bottom:1px solid var(--line); } .history li:last-child { border:0; } .empty { padding:14px 0; color:var(--muted); font-style:italic; } details { margin-top:14px; } summary { cursor:pointer; font-weight:750; } .provenance { color:var(--accent); font-size:12px; font-weight:700; } .marker { border-left:4px solid var(--warning); background:#fff8e4; margin:7px 0; padding:8px 10px; border-radius:4px; }
+    @media (max-width:760px) { main { padding:20px 12px 48px; } .assumptions { columns:1; } .span-3,.span-4,.span-6,.span-8 { grid-column:span 12; } table { font-size:13px; } th,td { padding:7px 4px; } .step { align-items:flex-start; flex-wrap:wrap; } .step button { width:100%; } }
+  </style>
+</head>
+<body>
+<main>
+  <section class="intro">
+    <div class="eyebrow">PROTOTYPE · Throwaway logic, not production</div>
+    <h1>When should capture ask, mark incomplete, or refuse?</h1>
+    <p>This demo tests how spoken and written Artisan input becomes a reviewed Quote change. It asks one concise question only when the answer changes commercial meaning. Other missing facts remain visible as "needs Artisan input" markers for review.</p>
+    <p><strong>Question under test:</strong> Can an Artisan get useful structure from AI-assisted capture without the system inventing commercial facts or turning drafting into an interview?</p>
+    <ul class="assumptions">
+      <li>Speech uses explicit push-to-talk. Recording has a visible state and can be cancelled. This prototype keeps a transcript as input, never raw audio in the resulting draft.</li>
+      <li>Written and spoken input use the same extraction path. Extraction proposes changes. It never mutates a Quote without Artisan review and apply.</li>
+      <li>Each asserted fact shows evidence from Artisan input or an explicitly selected Customer, Business Default, Business Catalog, Customer Note, or Business Guidance.</li>
+      <li>AI may structure or reword evidence. It may not invent Customer identity, quantity, unit, material, Catalog Item match, price, VAT treatment, payment or acceptance terms, or validity.</li>
+      <li>A concise clarification is reserved for commercial forks: quantity or unit, priced scope versus option or exclusion, who performs or supplies, or which Customer or Catalog Item was meant.</li>
+      <li>Absent prices, Customer details, terms, and publication requirements create draft markers instead of more questions. The Artisan may defer a clarification into the same kind of marker.</li>
+      <li>Customer Notes, Business Guidance, and Catalog Items only enter a run when selected. Nothing is learned, saved, or updated by capture.</li>
+    </ul>
+  </section>
+
+  <div id="notice" class="notice">Load a walkthrough or use free play. All state is in memory and disappears on refresh.</div>
+
+  <h2>Current capture and Quote state</h2>
+  <section id="state" class="panel"></section>
+
+  <h2>Free play</h2>
+  <section class="panel"><p>These buttons deliberately permit awkward orderings. A refusal records why it did not alter the Quote.</p><div id="free-play" class="controls"></div></section>
+
+  <h2>Guided walkthroughs</h2>
+  <div id="tabs" class="tabs"></div>
+  <section id="walkthrough" class="walkthrough"></section>
+</main>
+
+<script>
+// AI-ASSISTED CAPTURE PROTOTYPE - pure reducer module. It has no DOM, provider, persistence, or raw-audio dependency.
+const CaptureModel = (() => {
+  const copy = value => JSON.parse(JSON.stringify(value));
+  const fact = (value, source, evidence) => value == null ? null : ({ value, source, evidence });
+  const marker = (field, reason) => ({ field, reason, status:"needs Artisan input" });
+  const defaultMarkers = () => [marker("Customer and address", "Select or enter the Customer before publication."), marker("Payment and acceptance terms", "Choose terms before publication."), marker("Validity and VAT treatment", "Confirm publication requirements before publication.")];
+  const emptyQuote = () => ({ number:"Draft Q-104", customer:null, customerAddress:null, paymentTerms:null, acceptanceTerms:null, validity:null, vat:null, lines:[], unresolved:[], untouchedFields:[], lastAppliedFields:[] });
+  const existingQuote = () => ({
+    number:"Q-103", customer:fact("Camille Martin", "Selected Customer", "Customer record selected before this capture run."), customerAddress:fact("18 Rue du Lac, Lausanne", "Selected Customer", "Customer record selected before this capture run."),
+    paymentTerms:fact("Payment due within 30 days", "Business Default", "Selected Business Default."), acceptanceTerms:fact("Acceptance by written confirmation", "Business Default", "Selected Business Default."), validity:fact("30 days", "Business Default", "Selected Business Default."), vat:fact("VAT added at 8.1%", "Business Default", "Selected Business Default."),
+    lines:[{ id:"L-1", description:fact("Paint hallway walls", "Artisan input", "Earlier Artisan-confirmed Quote Line."), quantity:fact(18, "Artisan input", "Earlier Artisan-confirmed Quote Line."), unit:fact("m²", "Artisan input", "Earlier Artisan-confirmed Quote Line."), unitPrice:fact(4800, "Artisan input", "Earlier Artisan-confirmed Quote Line."), inclusion:fact("priced", "Artisan input", "Earlier Artisan-confirmed Quote Line."), performer:fact("Artisan Business", "Artisan input", "Earlier Artisan-confirmed Quote Line."), materialSupplier:fact("Artisan Business", "Artisan input", "Earlier Artisan-confirmed Quote Line.") }],
+    unresolved:[], untouchedFields:[], lastAppliedFields:[]
+  });
+  const initial = () => ({ quote:emptyQuote(), capture:{ status:"idle", fixture:null, source:null, selectedInputs:[], proposal:null, clarification:null, failure:null, rejected:[] }, history:["New empty Quote draft. No input has been captured."] });
+  const selected = (...items) => items.map(([kind, name, note]) => ({ kind, name, note }));
+  const run = (state, fixture, source, selectedInputs) => { state.capture = { status:"captured", fixture, source, selectedInputs, proposal:null, clarification:null, failure:null, rejected:[] }; state.history.push(`${source.channel === "speech" ? "Spoken" : "Written"} Artisan input captured. Raw audio retained: no.`); return state; };
+  const addHistory = (state, text) => { state.history.push(text); return state; };
+  const proposal = (id, summary, operations, markers = [], suggestions = []) => ({ id, summary, operations, markers, suggestions });
+  const speechSource = text => ({ channel:"speech", input:text, rawAudioRetained:false });
+  const writtenSource = text => ({ channel:"written", input:text, rawAudioRetained:false });
+  const clearProposal = () => proposal("P-1", "New priced hallway-painting line and copied Quote details.", [
+    { kind:"set", field:"customer", value:"Camille Martin", source:"Selected Customer", evidence:"Customer record selected before capture." },
+    { kind:"set", field:"customerAddress", value:"18 Rue du Lac, Lausanne", source:"Selected Customer", evidence:"Customer record selected before capture." },
+    { kind:"set", field:"paymentTerms", value:"Payment due within 30 days", source:"Business Default", evidence:"Selected Business Default." },
+    { kind:"set", field:"acceptanceTerms", value:"Acceptance by written confirmation", source:"Business Default", evidence:"Selected Business Default." },
+    { kind:"set", field:"validity", value:"30 days", source:"Business Default", evidence:"Selected Business Default." },
+    { kind:"set", field:"vat", value:"VAT added at 8.1%", source:"Business Default", evidence:"Selected Business Default." },
+    { kind:"addLine", id:"L-1", values:{ description:fact("Paint hallway walls", "Artisan input", "\"paint ... the hallway\""), quantity:fact(24, "Artisan input", "\"24 m²\""), unit:fact("m²", "Artisan input", "\"24 m²\""), unitPrice:fact(4800, "Artisan input", "\"CHF 48 per m²\""), inclusion:fact("priced", "Artisan input", "The stated per-unit price makes this priced scope."), performer:fact("Artisan Business", "Artisan input", "\"I will do the work\""), materialSupplier:fact("Artisan Business", "Artisan input", "\"I will ... supply the paint\"") } }
+  ]);
+  const ambiguousProposal = quantityValue => proposal("P-2", "New hallway-painting line after one quantity clarification.", [{ kind:"addLine", id:"L-1", values:{ description:fact("Paint hallway", "Artisan input", "\"Paint ... in the hallway\""), quantity:fact(quantityValue, "Artisan clarification", "Artisan answered the quantity question."), unit:fact("m²", "Artisan clarification", "Artisan answered the quantity question."), inclusion:fact("Needs Artisan input", "Needs Artisan input", "The input did not say priced, optional, or excluded."), performer:fact("Needs Artisan input", "Needs Artisan input", "No performer was supplied."), materialSupplier:fact("Needs Artisan input", "Needs Artisan input", "No material supplier was supplied.") } }], [marker("L-1 unit price", "Enter an Artisan-confirmed price."), marker("L-1 commercial treatment", "Choose priced, optional, or excluded scope."), ...defaultMarkers()]);
+  const missingProposal = () => proposal("P-3", "New repair line with no invented commercial details.", [{ kind:"addLine", id:"L-1", values:{ description:fact("Repair garden wall", "Artisan input", "\"Repair the garden wall\""), quantity:fact("Needs Artisan input", "Needs Artisan input", "Quantity was not supplied."), unit:fact("Needs Artisan input", "Needs Artisan input", "Unit was not supplied."), unitPrice:fact(null, "Needs Artisan input", "Price was not supplied."), inclusion:fact("Needs Artisan input", "Needs Artisan input", "The input did not say priced, optional, or excluded."), performer:fact("Needs Artisan input", "Needs Artisan input", "Performer was not supplied."), materialSupplier:fact("Needs Artisan input", "Needs Artisan input", "Material supplier was not supplied.") } }], [marker("L-1 quantity and unit", "Enter the measurable scope."), marker("L-1 unit price", "Enter an Artisan-confirmed price."), marker("L-1 commercial treatment", "Choose priced, optional, or excluded scope."), ...defaultMarkers()]);
+  const exclusionProposal = () => proposal("P-4", "Add removal as an explicit Customer responsibility.", [{ kind:"addLine", id:"L-2", values:{ description:fact("Remove existing hallway carpet", "Artisan input", "The Artisan named removal work."), quantity:fact("Needs Artisan input", "Needs Artisan input", "Quantity was not supplied."), unit:fact("Needs Artisan input", "Needs Artisan input", "Unit was not supplied."), unitPrice:fact(null, "Not applicable", "Excluded scope has no Quote price."), inclusion:fact("excluded", "Artisan clarification", "Artisan chose excluded Customer responsibility."), performer:fact("Customer", "Artisan input", "\"the Customer will take it away\""), materialSupplier:fact("Not applicable", "Not applicable", "Removal has no supplied material.") } }], [marker("L-2 quantity and unit", "Enter the excluded scope measurement if required for publication.")]);
+  const patchProposal = () => proposal("P-5", "Change only the hallway-painting quantity from 18 m² to 22 m².", [{ kind:"setLine", id:"L-1", field:"quantity", value:fact(22, "Artisan input", "\"Make the hallway paint area 22 m²\"") }]);
+  const wordingProposal = () => proposal("P-6", "Add the Artisan's plain scope wording. Offer a separate editable rewording.", [{ kind:"addLine", id:"L-1", values:{ description:fact("Freshen up walls", "Artisan input", "\"Freshen up walls\""), quantity:fact("Needs Artisan input", "Needs Artisan input", "Quantity was not supplied."), unit:fact("Needs Artisan input", "Needs Artisan input", "Unit was not supplied."), unitPrice:fact(null, "Needs Artisan input", "Price was not supplied."), inclusion:fact("Needs Artisan input", "Needs Artisan input", "The input did not say priced, optional, or excluded."), performer:fact("Needs Artisan input", "Needs Artisan input", "Performer was not supplied."), materialSupplier:fact("Needs Artisan input", "Needs Artisan input", "Material supplier was not supplied.") } }], [marker("L-1 quantity, unit, unit price, and commercial treatment", "Enter measurable and priced scope."), ...defaultMarkers()], [{ lineId:"L-1", value:"Prepare and repaint interior walls", confidence:"low", evidence:"A wording guess based only on \"Freshen up walls\". It is not a fact." }]);
+  const matchProposal = () => proposal("P-match", "Copy only the Customer and Catalog Item that the Artisan selected in clarification.", [
+    { kind:"set", field:"customer", value:"Camille Martin", source:"Selected Customer", evidence:"Artisan selected Camille Martin in clarification." },
+    { kind:"set", field:"customerAddress", value:"18 Rue du Lac, Lausanne", source:"Selected Customer", evidence:"Copied from the Customer record selected in clarification." },
+    { kind:"addLine", id:"L-1", values:{ description:fact("Exterior porch paintwork", "Business Catalog", "Artisan selected this Catalog Item in clarification."), quantity:fact("Needs Artisan input", "Needs Artisan input", "Quantity was not supplied."), unit:fact("m²", "Business Catalog", "Copied from the Catalog Item selected in clarification."), unitPrice:fact(5000, "Business Catalog", "Copied catalog default price after Artisan selection."), inclusion:fact("Needs Artisan input", "Needs Artisan input", "The input did not say priced, optional, or excluded."), performer:fact("Needs Artisan input", "Needs Artisan input", "Performer was not supplied."), materialSupplier:fact("Needs Artisan input", "Needs Artisan input", "Material supplier was not supplied.") } }
+  ], [marker("L-1 quantity", "Enter the measured porch area."), marker("L-1 commercial treatment", "Choose priced, optional, or excluded scope.")]);
+  const retryProposal = () => proposal("P-7", "New repair line after a provider retry, still incomplete where evidence is absent.", [{ kind:"addLine", id:"L-1", values:{ description:fact("Repair loose gate hinge", "Artisan input", "\"Repair the loose gate hinge\""), quantity:fact("Needs Artisan input", "Needs Artisan input", "Quantity was not supplied."), unit:fact("Needs Artisan input", "Needs Artisan input", "Unit was not supplied."), unitPrice:fact(null, "Needs Artisan input", "Price was not supplied."), inclusion:fact("Needs Artisan input", "Needs Artisan input", "The input did not say priced, optional, or excluded."), performer:fact("Needs Artisan input", "Needs Artisan input", "Performer was not supplied."), materialSupplier:fact("Needs Artisan input", "Needs Artisan input", "Material supplier was not supplied.") } }], [marker("L-1 quantity, unit, price, and commercial treatment", "Enter measurable and priced scope."), ...defaultMarkers()]);
+  const makeLine = operation => ({ id:operation.id, ...operation.values });
+  const apply = state => {
+    const p = state.capture.proposal;
+    if (state.capture.status !== "review" || !p) return addHistory(state, "Reducer refused apply: there is no reviewable proposed change. Quote unchanged.");
+    const changed = [];
+    p.operations.forEach(operation => {
+      if (operation.kind === "set") { state.quote[operation.field] = fact(operation.value, operation.source, operation.evidence); changed.push(operation.field); }
+      if (operation.kind === "addLine") { if (state.quote.lines.some(line => line.id === operation.id)) throw new Error("A proposed Quote Line cannot overwrite an existing line."); state.quote.lines.push(makeLine(operation)); changed.push(`Quote Line ${operation.id}`); }
+      if (operation.kind === "setLine") { const line = state.quote.lines.find(item => item.id === operation.id); if (!line) throw new Error("The proposed Quote Line patch has no matching existing line."); line[operation.field] = operation.value; changed.push(`${operation.id} ${operation.field}`); }
+    });
+    state.quote.unresolved = [...state.quote.unresolved, ...p.markers];
+    state.quote.lastAppliedFields = changed;
+    state.quote.untouchedFields = p.operations.some(item => item.kind === "setLine") ? ["Customer", "Customer address", "payment terms", "acceptance terms", "validity", "VAT treatment", "L-1 description", "L-1 unit price", "L-1 inclusion", "L-1 performer", "L-1 material supplier"] : [];
+    state.capture.status = "applied";
+    addHistory(state, `Artisan applied proposal ${p.id}. Only listed fields changed.`);
+    return state;
+  };
+  const reduce = (original, action) => {
+    let state = copy(original);
+    switch (action.type) {
+      case "RESET": return initial();
+      case "LOAD_CLEAR": state = initial(); state.capture.fixture = "clear"; return addHistory(state, "Clear spoken happy-path walkthrough loaded.");
+      case "LOAD_AMBIGUOUS": state = initial(); state.capture.fixture = "ambiguous"; return addHistory(state, "Ambiguous quantity and unit walkthrough loaded.");
+      case "LOAD_MISSING": state = initial(); state.capture.fixture = "missing"; return addHistory(state, "Incomplete-draft walkthrough loaded.");
+      case "LOAD_EXCLUSION": state = initial(); state.quote = existingQuote(); state.capture.fixture = "exclusion"; return addHistory(state, "Scope contradiction walkthrough loaded against an existing Quote.");
+      case "LOAD_PATCH": state = initial(); state.quote = existingQuote(); state.capture.fixture = "patch"; return addHistory(state, "Existing-Quote patch walkthrough loaded.");
+      case "LOAD_WORDING": state = initial(); state.capture.fixture = "wording"; return addHistory(state, "Low-confidence wording walkthrough loaded.");
+      case "LOAD_MATCH": state = initial(); state.capture.fixture = "match"; return addHistory(state, "Customer and Catalog Item ambiguity walkthrough loaded.");
+      case "LOAD_FAILURE": state = initial(); state.capture.fixture = "failure"; return addHistory(state, "Provider failure walkthrough loaded.");
+      case "LOAD_FABRICATION": state = initial(); state.quote = existingQuote(); state.capture.fixture = "fabrication"; return addHistory(state, "Unsupported-value refusal walkthrough loaded against an existing Quote.");
+      case "START_RECORDING":
+        if (state.capture.status !== "idle" || state.capture.fixture !== "clear") return addHistory(state, "Reducer refused recording: load the spoken walkthrough and start from idle.");
+        state.capture.status = "recording"; state.capture.source = { channel:"speech", input:"Recording in progress. No raw audio will be retained in a draft.", rawAudioRetained:false }; return addHistory(state, "Push-to-talk recording started.");
+      case "CANCEL_RECORDING":
+        if (state.capture.status !== "recording") return addHistory(state, "Reducer refused cancel: no speech recording is active.");
+        state.capture.status = "idle"; state.capture.source = null; return addHistory(state, "Speech recording cancelled and discarded. No raw audio retained.");
+      case "FINISH_CLEAR_SPEECH":
+        if (state.capture.status !== "recording") return addHistory(state, "Reducer refused speech finish: start push-to-talk first.");
+        return run(state, "clear", speechSource("For Camille Martin, paint 24 m² of the hallway at CHF 48 per m². I will do the work and supply the paint."), selected(["Customer", "Camille Martin", "Selected before capture."], ["Business Default", "Standard commercial terms", "Payment, acceptance, validity, and VAT treatment copied only if applied."]));
+      case "SUBMIT_WRITTEN": {
+        const fixtures = { ambiguous:["Paint twelve in the hallway.", []], missing:["Repair the garden wall.", []], exclusion:["Include removal of the old hallway carpet, but do not charge for it. The Customer will take it away.", []], patch:["Make the hallway paint area 22 m².", []], wording:["Freshen up walls.", [["Business Guidance", "Plain-language scopes", "Selected wording guidance. It supplies no commercial fact."]]], match:["Paint the porch for Martin with the usual paintwork.", [["Customer records", "Camille Martin and Alex Martin", "Candidate records explicitly opened for this run. No Customer is copied yet."], ["Business Catalog", "Exterior porch paintwork and interior paintwork", "Candidate items explicitly opened for this run. No Catalog Item is matched yet."]]], failure:["Repair the loose gate hinge.", []], fabrication:["Paint the hallway.", []] };
+        const fixture = state.capture.fixture;
+        if (!fixtures[fixture] || state.capture.status !== "idle") return addHistory(state, "Reducer refused written submission: load a written walkthrough first.");
+        return run(state, fixture, writtenSource(fixtures[fixture][0]), selected(...fixtures[fixture][1]));
+      }
+      case "EXTRACT": {
+        if (state.capture.status !== "captured") return addHistory(state, "Reducer refused extraction: capture spoken or written input first.");
+        const fixture = state.capture.fixture;
+        if (fixture === "clear") { state.capture.proposal = clearProposal(); state.capture.status = "review"; return addHistory(state, "Extraction produced reviewable changes from supplied evidence."); }
+        if (fixture === "missing") { state.capture.proposal = missingProposal(); state.capture.status = "review"; return addHistory(state, "Extraction made an incomplete draft. It did not ask for every absent field."); }
+        if (fixture === "patch") { state.capture.proposal = patchProposal(); state.capture.status = "review"; return addHistory(state, "Extraction produced a patch. Untouched Quote fields remain outside the proposal."); }
+        if (fixture === "wording") { state.capture.proposal = wordingProposal(); state.capture.status = "review"; return addHistory(state, "Extraction kept low-confidence wording as an editable suggestion, not an asserted fact."); }
+        if (fixture === "match") { state.capture.status = "clarification"; state.capture.clarification = { question:"Which selection did you mean: Camille Martin with Exterior porch paintwork, or Alex Martin with Interior paintwork?", reason:"The input does not identify a Customer or Catalog Item. A match would be invented without an Artisan choice.", choices:["Camille Martin and Exterior porch paintwork", "Alex Martin and Interior paintwork", "Defer to draft marker"] }; return addHistory(state, "One clarification requested instead of inventing a Customer or Catalog Item match."); }
+        if (fixture === "ambiguous") { state.capture.status = "clarification"; state.capture.clarification = { question:"Does 'twelve' mean 12 m² of hallway area or 12 hours of work?", reason:"Quantity and unit change the priced scope.", choices:["12 m²", "12 hours", "Defer to draft marker"] }; return addHistory(state, "One clarification requested because quantity and unit change commercial meaning."); }
+        if (fixture === "exclusion") { state.capture.status = "clarification"; state.capture.clarification = { question:"Should carpet removal be excluded as the Customer's responsibility, or included at no separate charge?", reason:"The input says both no charge and Customer performs the work.", choices:["Excluded, Customer responsibility", "Included at no separate charge", "Defer to draft marker"] }; return addHistory(state, "One clarification requested because inclusion and performer conflict."); }
+        if (fixture === "failure") { state.capture.status = "failure"; state.capture.failure = { kind:"provider timeout", message:"No structured output arrived. The Quote was not changed.", retryable:true }; return addHistory(state, "Provider timed out. Source input remains available for retry or editing."); }
+        if (fixture === "fabrication") { state.capture.status = "refused"; state.capture.rejected = [{ field:"quantity", value:"40 m²", reason:"AI supplied it without Artisan or selected-source evidence." }, { field:"material", value:"walnut", reason:"AI supplied it without evidence." }, { field:"unit price", value:"CHF 9,999", reason:"AI supplied it without evidence." }, { field:"Customer", value:"Alex Bernard", reason:"AI supplied an identity without a selected Customer." }]; return addHistory(state, "Reducer refused unsupported AI output. The existing Quote did not change."); }
+        return addHistory(state, "Reducer refused extraction: no fixture exists.");
+      }
+      case "ANSWER_QUANTITY":
+        if (state.capture.status !== "clarification" || state.capture.fixture !== "ambiguous") return addHistory(state, "Reducer refused clarification answer: no quantity question is open.");
+        state.capture.proposal = ambiguousProposal(12); state.capture.clarification = null; state.capture.status = "review"; return addHistory(state, "Artisan clarified 12 m². The answer has its own provenance.");
+      case "ANSWER_EXCLUSION":
+        if (state.capture.status !== "clarification" || state.capture.fixture !== "exclusion") return addHistory(state, "Reducer refused clarification answer: no scope question is open.");
+        state.capture.proposal = exclusionProposal(); state.capture.clarification = null; state.capture.status = "review"; return addHistory(state, "Artisan chose excluded Customer responsibility.");
+      case "ANSWER_MATCH":
+        if (state.capture.status !== "clarification" || state.capture.fixture !== "match") return addHistory(state, "Reducer refused clarification answer: no Customer and Catalog Item question is open.");
+        state.capture.proposal = matchProposal(); state.capture.clarification = null; state.capture.status = "review"; return addHistory(state, "Artisan selected Camille Martin and Exterior porch paintwork. Nothing was matched automatically.");
+      case "DEFER_CLARIFICATION":
+        if (state.capture.status !== "clarification") return addHistory(state, "Reducer refused defer: no clarification is open.");
+        state.capture.proposal = proposal("P-deferred", "Add an incomplete scope line; the unanswered fork stays visible for review.", [{ kind:"addLine", id:"L-deferred", values:{ description:fact(state.capture.fixture === "exclusion" ? "Remove existing hallway carpet" : "Paint hallway", "Artisan input", "Original Artisan input."), quantity:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), unit:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), unitPrice:fact(null, "Needs Artisan input", "Price was not supplied."), inclusion:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), performer:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), materialSupplier:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred.") } }], [marker("L-deferred commercial treatment", "Clarification deferred by Artisan."), marker("L-deferred quantity and unit", "Clarification deferred by Artisan.")]); state.capture.clarification = null; state.capture.status = "review"; return addHistory(state, "Artisan deferred the clarification into visible draft markers.");
+      case "APPLY_PROPOSAL": return apply(state);
+      case "ACCEPT_WORDING": {
+        const p = state.capture.proposal; const suggestion = p && p.suggestions && p.suggestions[0]; const line = suggestion && state.quote.lines.find(item => item.id === suggestion.lineId);
+        if (!line || state.capture.status !== "applied") return addHistory(state, "Reducer refused wording acceptance: apply the proposed line before confirming a suggestion.");
+        line.description = fact(suggestion.value, "Artisan confirmed suggestion", "Artisan explicitly accepted the previously flagged wording."); return addHistory(state, "Artisan confirmed the editable wording suggestion. It is now a confirmed Quote fact.");
+      }
+      case "RETRY":
+        if (state.capture.status !== "failure" || !state.capture.failure || !state.capture.failure.retryable) return addHistory(state, "Reducer refused retry: there is no retryable provider failure.");
+        state.capture.proposal = retryProposal(); state.capture.failure = null; state.capture.status = "review"; return addHistory(state, "Retry returned a proposal. The original input remains its evidence.");
+      case "TRY_APPLY_FABRICATION":
+        if (state.capture.fixture !== "fabrication") return addHistory(state, "Reducer refused the unsupported-value test: load that walkthrough first.");
+        state.capture.status = "refused"; return addHistory(state, "Reducer refused attempted application of unsupported quantity, material, price, and Customer. Quote unchanged.");
+      default: throw new Error(`Unknown action: ${action.type}`);
+    }
+  };
+  const lineAmount = line => line.inclusion && line.inclusion.value === "priced" && typeof (line.quantity && line.quantity.value) === "number" && typeof (line.unitPrice && line.unitPrice.value) === "number" ? Math.round(line.quantity.value * line.unitPrice.value) : null;
+  const publicationBlockers = quote => {
+    const required = [["Customer", quote.customer], ["Customer address", quote.customerAddress], ["payment terms", quote.paymentTerms], ["acceptance terms", quote.acceptanceTerms], ["validity", quote.validity], ["VAT treatment", quote.vat]];
+    quote.lines.forEach(line => { required.push([`${line.id} description`, line.description], [`${line.id} quantity`, line.quantity], [`${line.id} unit`, line.unit], [`${line.id} price`, line.unitPrice], [`${line.id} commercial treatment`, line.inclusion]); });
+    return [...quote.unresolved.map(item => item.field), ...required.filter(([, value]) => !value || value.value == null || value.value === "Needs Artisan input").map(([label]) => label)].filter((value, index, all) => all.indexOf(value) === index);
+  };
+  return { initial, lineAmount, publicationBlockers, reduce };
+})();
+</script>
+
+<script>
+// Throwaway page shell. It renders the complete state and calls the pure reducer above.
+const actions = [
+  ["RESET", "New empty draft"], ["LOAD_CLEAR", "Load clear spoken case"], ["START_RECORDING", "Start push-to-talk"], ["FINISH_CLEAR_SPEECH", "Finish spoken input"], ["CANCEL_RECORDING", "Cancel recording"],
+  ["LOAD_AMBIGUOUS", "Load ambiguous quantity case"], ["LOAD_MISSING", "Load missing-details case"], ["LOAD_EXCLUSION", "Load scope conflict case"], ["LOAD_PATCH", "Load existing Quote patch"], ["LOAD_WORDING", "Load wording case"], ["LOAD_MATCH", "Load Customer and Catalog Item ambiguity"], ["LOAD_FAILURE", "Load provider failure"], ["LOAD_FABRICATION", "Load unsupported-value case"],
+  ["SUBMIT_WRITTEN", "Submit written input"], ["EXTRACT", "Extract proposed changes"], ["ANSWER_QUANTITY", "Answer: 12 m²"], ["ANSWER_EXCLUSION", "Answer: excluded, Customer responsibility"], ["ANSWER_MATCH", "Answer: Camille and Exterior porch paintwork"], ["DEFER_CLARIFICATION", "Defer clarification to draft marker"], ["APPLY_PROPOSAL", "Apply reviewed proposal"], ["ACCEPT_WORDING", "Accept editable wording"], ["RETRY", "Retry provider"], ["TRY_APPLY_FABRICATION", "Try applying unsupported values"]
+];
+const walkthroughs = [
+  { name:"Clear spoken capture", description:"Push-to-talk stays explicit. A clear transcript produces a reviewed proposal with facts copied from named evidence. Applying it creates the line and lets deterministic code calculate the amount.", start:"LOAD_CLEAR", steps:[["START_RECORDING","Start visible push-to-talk recording"],["FINISH_CLEAR_SPEECH","Finish speech. Only the transcript enters the run"],["EXTRACT","Extract a proposal, not a Quote mutation"],["APPLY_PROPOSAL","Artisan reviews and applies the proposal"]] },
+  { name:"One quantity question", description:"The word 'twelve' could mean area or hours. That fork changes the price shape, so it earns one concise clarification. Missing price and terms remain draft markers.", start:"LOAD_AMBIGUOUS", steps:[["SUBMIT_WRITTEN","Submit the ambiguous written input"],["EXTRACT","Ask the one material clarification"],["ANSWER_QUANTITY","Answer 12 m²"],["APPLY_PROPOSAL","Apply the clarified but incomplete draft"]] },
+  { name:"Incomplete, not interrogated", description:"A sparse repair request gets one usable line and visible holes. The model does not pretend it knows the Customer, price, terms, VAT, or validity.", start:"LOAD_MISSING", steps:[["SUBMIT_WRITTEN","Submit a sparse repair request"],["EXTRACT","Create a proposal with draft markers"],["APPLY_PROPOSAL","Apply the incomplete draft"]] },
+  { name:"Customer and Catalog Item", description:"Candidate records and Catalog Items may be opened for a run, but no match happens by implication. The Artisan chooses one concise paired answer before either source is copied.", start:"LOAD_MATCH", steps:[["SUBMIT_WRITTEN","Submit an ambiguous Customer and Catalog request"],["EXTRACT","Ask which prepared selection was meant"],["ANSWER_MATCH","Choose Camille and Exterior porch paintwork"],["APPLY_PROPOSAL","Apply the reviewed selection and leave quantity incomplete"]] },
+  { name:"Scope conflict", description:"No-charge removal conflicts with the Customer doing the removal. One answer decides commercial treatment and performer. The resulting exclusion cannot enter the price total.", start:"LOAD_EXCLUSION", steps:[["SUBMIT_WRITTEN","Submit conflicting scope wording"],["EXTRACT","Ask about exclusion versus included work"],["ANSWER_EXCLUSION","Choose excluded Customer responsibility"],["APPLY_PROPOSAL","Apply the reviewed patch"]] },
+  { name:"Reviewed existing-Quote patch", description:"New written input changes only one quantity. Before apply, compare the affected field with the fields the reducer leaves untouched.", start:"LOAD_PATCH", steps:[["SUBMIT_WRITTEN","Submit the quantity change"],["EXTRACT","Inspect the proposed patch"],["APPLY_PROPOSAL","Apply only the quantity change"]] },
+  { name:"Low-confidence wording", description:"The assistant can offer better wording, but it remains a flagged suggestion. It becomes a Quote fact only after the Artisan accepts it.", start:"LOAD_WORDING", steps:[["SUBMIT_WRITTEN","Submit vague wording"],["EXTRACT","Inspect the explicitly low-confidence suggestion"],["APPLY_PROPOSAL","Apply the original Artisan wording and markers"],["ACCEPT_WORDING","Artisan confirms the suggested wording"]] },
+  { name:"Provider failure", description:"A timeout leaves the Quote alone. The input stays with the capture run so the Artisan can retry or edit it. A retry still does not create a price or other unsupported value.", start:"LOAD_FAILURE", steps:[["SUBMIT_WRITTEN","Submit written input"],["EXTRACT","Simulate provider timeout"],["RETRY","Retry with the same preserved input"],["APPLY_PROPOSAL","Apply the returned incomplete proposal"]] },
+  { name:"Unsupported values refused", description:"This simulates a provider trying to add a quantity, walnut material, price, and Customer without evidence. The reducer rejects them, including a later attempt to apply them.", start:"LOAD_FABRICATION", steps:[["SUBMIT_WRITTEN","Submit a simple written request"],["EXTRACT","Reject fabricated provider output"],["TRY_APPLY_FABRICATION","Try to apply the unsupported values anyway"]] }
+];
+let state = CaptureModel.initial(); let activeWalkthrough = 0; let activeStep = 0;
+const cash = value => value == null ? "Not calculated" : new Intl.NumberFormat("en-CH", { style:"currency", currency:"CHF" }).format(value / 100);
+const escapeHtml = value => String(value == null ? "" : value).replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#039;" }[char]));
+const showFact = value => !value ? "<span class=\"badge muted\">Not set</span>" : `${escapeHtml(value.value)}<br><span class="provenance">${escapeHtml(value.source)}: ${escapeHtml(value.evidence)}</span>`;
+const captureLabel = status => ({ idle:"Ready for input", recording:"Recording", captured:"Input captured", clarification:"Needs one clarification", review:"Proposal ready for review", applied:"Proposal applied", failure:"Provider failure", refused:"Unsupported output refused" }[status] || status);
+function render() {
+  const quote = state.quote, capture = state.capture, blockers = CaptureModel.publicationBlockers(quote);
+  const source = capture.source ? `${capture.source.channel === "speech" ? "Spoken transcript" : "Written input"}: ${capture.source.input}` : "No source input captured.";
+  const selectedInputs = capture.selectedInputs.length ? capture.selectedInputs.map(item => `<li><strong>${escapeHtml(item.kind)}: ${escapeHtml(item.name)}</strong><br><small>${escapeHtml(item.note)}</small></li>`).join("") : "<li class=\"empty\">No reusable source was selected for this run.</li>";
+  const proposalHtml = capture.proposal ? `<p><strong>${escapeHtml(capture.proposal.id)}</strong> · ${escapeHtml(capture.proposal.summary)}</p><table><thead><tr><th>Affected field</th><th>Proposed value</th><th>Evidence and provenance</th></tr></thead><tbody>${capture.proposal.operations.map(operation => {
+    if (operation.kind === "set") return `<tr><td>${escapeHtml(operation.field)}</td><td>${escapeHtml(operation.value)}</td><td><span class="provenance">${escapeHtml(operation.source)}</span><br>${escapeHtml(operation.evidence)}</td></tr>`;
+    if (operation.kind === "setLine") return `<tr><td>${escapeHtml(operation.id)} ${escapeHtml(operation.field)}</td><td>${escapeHtml(operation.value.value)}</td><td><span class="provenance">${escapeHtml(operation.value.source)}</span><br>${escapeHtml(operation.value.evidence)}</td></tr>`;
+    return Object.entries(operation.values).map(([field, value]) => `<tr><td>${escapeHtml(operation.id)} ${escapeHtml(field)}</td><td>${escapeHtml(value && value.value)}</td><td><span class="provenance">${escapeHtml(value && value.source)}</span><br>${escapeHtml(value && value.evidence)}</td></tr>`).join("");
+  }).join("")}</tbody></table>${capture.proposal.suggestions.map(item => `<div class="marker"><strong>Editable wording suggestion, low confidence:</strong> ${escapeHtml(item.value)}<br><small>${escapeHtml(item.evidence)}</small></div>`).join("")}${capture.proposal.markers.map(item => `<div class="marker"><strong>${escapeHtml(item.field)}</strong> · ${escapeHtml(item.status)}<br><small>${escapeHtml(item.reason)}</small></div>`).join("")}` : "<p class=\"empty\">No proposed changes.</p>";
+  const lines = quote.lines.length ? quote.lines.map(line => `<tr><td><strong>${escapeHtml(line.id)}</strong><br>${showFact(line.description)}</td><td>${showFact(line.quantity)}<br>${showFact(line.unit)}</td><td>${showFact(line.unitPrice)}</td><td>${showFact(line.inclusion)}<br>${showFact(line.performer)}<br>${showFact(line.materialSupplier)}</td><td class="money">${cash(CaptureModel.lineAmount(line))}</td></tr>`).join("") : "<tr><td colspan=\"5\" class=\"empty\">No applied Quote Lines. A proposal never changes this list until the Artisan applies it.</td></tr>";
+  const clarification = capture.clarification ? `<div class="marker"><strong>${escapeHtml(capture.clarification.question)}</strong><br>${escapeHtml(capture.clarification.reason)}<br><small>Choices: ${capture.clarification.choices.map(escapeHtml).join(" · ")}</small></div>` : "<p class=\"empty\">No open clarification.</p>";
+  const failure = capture.failure ? `<div class="notice error"><strong>${escapeHtml(capture.failure.kind)}.</strong> ${escapeHtml(capture.failure.message)} Retry available: ${capture.failure.retryable ? "yes" : "no"}.</div>` : capture.rejected.length ? `<div class="notice error"><strong>Rejected unsupported values.</strong>${capture.rejected.map(item => `<br>${escapeHtml(item.field)}: ${escapeHtml(item.value)}. ${escapeHtml(item.reason)}`).join("")}</div>` : "<p class=\"empty\">No provider failure or rejected output.</p>";
+  document.querySelector("#state").innerHTML = `
+    <div class="grid"><div class="field span-3"><span class="label">Quote</span><span class="value">${escapeHtml(quote.number)}</span></div><div class="field span-3"><span class="label">Capture state</span><span class="value"><span class="badge ${capture.status === "failure" || capture.status === "refused" ? "error" : capture.status === "clarification" ? "warning" : ""}">${escapeHtml(captureLabel(capture.status))}</span></span></div><div class="field span-3"><span class="label">Input channel</span><span class="value">${escapeHtml(capture.source ? capture.source.channel : "Not chosen")}</span></div><div class="field span-3"><span class="label">Raw audio in draft</span><span class="value">No</span></div></div>
+    <h3 style="margin-top:22px">Source input and selected reusable inputs</h3><div class="grid"><div class="field span-6"><span class="label">Source input</span><span class="value">${escapeHtml(source)}</span></div><div class="field span-6"><span class="label">Selected inputs for this run only</span><ul class="history">${selectedInputs}</ul></div></div>
+    <h3 style="margin-top:24px">Proposed changes before apply</h3>${proposalHtml}
+    <h3>Clarification</h3>${clarification}
+    <h3>Applied Quote fields</h3><div class="grid"><div class="field span-4"><span class="label">Customer</span><span class="value">${showFact(quote.customer)}</span></div><div class="field span-4"><span class="label">Customer address</span><span class="value">${showFact(quote.customerAddress)}</span></div><div class="field span-4"><span class="label">Terms and publication facts</span><span class="value">Payment: ${showFact(quote.paymentTerms)}<br>Acceptance: ${showFact(quote.acceptanceTerms)}<br>Validity: ${showFact(quote.validity)}<br>VAT: ${showFact(quote.vat)}</span></div></div>
+    <table><thead><tr><th>Applied Quote Line</th><th>Quantity and unit</th><th>Unit price</th><th>Commercial treatment, work, materials</th><th class="money">Deterministic amount</th></tr></thead><tbody>${lines}</tbody></table>
+    <div class="grid"><div class="span-6"><h3>Unresolved draft markers</h3>${quote.unresolved.length ? quote.unresolved.map(item => `<div class="marker"><strong>${escapeHtml(item.field)}</strong> · ${escapeHtml(item.status)}<br><small>${escapeHtml(item.reason)}</small></div>`).join("") : "<p class=\"empty\">None.</p>"}</div><div class="span-6"><h3>Patch review</h3><p><strong>Last applied fields:</strong> ${escapeHtml(quote.lastAppliedFields.join(", ") || "None")}</p><p><strong>Untouched existing fields:</strong> ${escapeHtml(quote.untouchedFields.join(", ") || "Not a patch run")}</p><h3>Established Quote publication checks</h3>${blockers.length ? `<p><span class="badge warning">Blocked</span> ${escapeHtml(blockers.join(", "))}</p>` : "<p><span class=\"badge\">No capture blockers</span> Hand this Quote to the established publication checks. Publication itself is out of this prototype.</p>"}</div></div>
+    <h3>Failure and refusal status</h3>${failure}
+    <h3>Action history</h3><ul class="history">${state.history.slice().reverse().map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+}
+function showNotice(message, style = "") { const element = document.querySelector("#notice"); element.textContent = message; element.className = `notice ${style}`; }
+function dispatch(type, fromWalkthrough = false) { try { state = CaptureModel.reduce(state, { type }); const label = (actions.find(item => item[0] === type) || [type, type])[1]; showNotice(`${label}. Inspect the state below.`, state.capture.status === "failure" || state.capture.status === "refused" ? "error" : state.capture.status === "clarification" ? "warning" : ""); if (fromWalkthrough) activeStep += 1; } catch (error) { showNotice(`Refused: ${error.message}`, "error"); } render(); renderWalkthrough(); }
+function renderFreePlay() { document.querySelector("#free-play").innerHTML = actions.map(([type, label], index) => `<button class="${index < 2 ? "primary" : ""}" data-action="${type}">${escapeHtml(label)}</button>`).join(""); document.querySelectorAll("#free-play button").forEach(button => button.addEventListener("click", () => dispatch(button.dataset.action))); }
+function startWalkthrough(index) { activeWalkthrough = index; activeStep = 0; state = CaptureModel.reduce(state, { type:walkthroughs[index].start }); showNotice(`Walkthrough started: ${walkthroughs[index].name}.`, ""); render(); renderTabs(); renderWalkthrough(); }
+function renderTabs() { document.querySelector("#tabs").innerHTML = walkthroughs.map((item, index) => `<button class="${index === activeWalkthrough ? "active" : ""}" data-tab="${index}">${escapeHtml(item.name)}</button>`).join(""); document.querySelectorAll("#tabs button").forEach(button => button.addEventListener("click", () => startWalkthrough(Number(button.dataset.tab)))); }
+function renderWalkthrough() { const item = walkthroughs[activeWalkthrough]; document.querySelector("#walkthrough").innerHTML = `<h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p><button data-restart>Restart this walkthrough</button><div class="steps">${item.steps.map(([type, label], index) => `<div class="step ${index < activeStep ? "done" : index === activeStep ? "current" : ""}"><span class="step-number">${index + 1}</span><span>${escapeHtml(label)}</span><button ${index === activeStep ? "" : "disabled"} data-step="${type}">${index < activeStep ? "Done" : index === activeStep ? "Do this" : "Waiting"}</button></div>`).join("")}</div>${activeStep >= item.steps.length ? "<p class=\"notice\">Walkthrough complete. Did it ask only where the commercial fork needed an answer?</p>" : ""}`; document.querySelector("[data-restart]").addEventListener("click", () => startWalkthrough(activeWalkthrough)); const button = document.querySelector("[data-step]:not([disabled])"); if (button) button.addEventListener("click", () => dispatch(button.dataset.step, true)); }
+renderFreePlay(); renderTabs(); renderWalkthrough(); render();
+</script>
+</body>
+</html>
