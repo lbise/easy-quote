@@ -161,9 +161,15 @@ const CaptureModel = (() => {
       case "ANSWER_MATCH":
         if (state.capture.status !== "clarification" || state.capture.fixture !== "match") return addHistory(state, "Reducer refused clarification answer: no Customer and Catalog Item question is open.");
         state.capture.proposal = matchProposal(); state.capture.clarification = null; state.capture.status = "review"; return addHistory(state, "Artisan selected Camille Martin and Exterior porch paintwork. Nothing was matched automatically.");
-      case "DEFER_CLARIFICATION":
+      case "DEFER_CLARIFICATION": {
         if (state.capture.status !== "clarification") return addHistory(state, "Reducer refused defer: no clarification is open.");
-        state.capture.proposal = proposal("P-deferred", "Add an incomplete scope line; the unanswered fork stays visible for review.", [{ kind:"addLine", id:"L-deferred", values:{ description:fact(state.capture.fixture === "exclusion" ? "Remove existing hallway carpet" : "Paint hallway", "Artisan input", "Original Artisan input."), quantity:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), unit:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), unitPrice:fact(null, "Needs Artisan input", "Price was not supplied."), inclusion:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), performer:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), materialSupplier:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred.") } }], [marker("L-deferred commercial treatment", "Clarification deferred by Artisan."), marker("L-deferred quantity and unit", "Clarification deferred by Artisan.")]); state.capture.clarification = null; state.capture.status = "review"; return addHistory(state, "Artisan deferred the clarification into visible draft markers.");
+        const descriptions = { exclusion:"Remove existing hallway carpet", match:"Paint porch", ambiguous:"Paint hallway" };
+        const deferredMarkers = state.capture.fixture === "match"
+          ? [marker("Customer selection", "Clarification deferred by Artisan."), marker("Catalog Item selection", "Clarification deferred by Artisan."), marker("L-deferred quantity and unit", "The input did not supply measurable scope."), marker("L-deferred commercial treatment", "The input did not say priced, optional, or excluded.")]
+          : [marker("L-deferred commercial treatment", "Clarification deferred by Artisan."), marker("L-deferred quantity and unit", "Clarification deferred by Artisan.")];
+        state.capture.proposal = proposal("P-deferred", "Add an incomplete scope line; the unanswered fork stays visible for review.", [{ kind:"addLine", id:"L-deferred", values:{ description:fact(descriptions[state.capture.fixture] || "Unresolved work", "Artisan input", "Original Artisan input."), quantity:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), unit:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), unitPrice:fact(null, "Needs Artisan input", "Price was not supplied."), inclusion:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), performer:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred."), materialSupplier:fact("Needs Artisan input", "Needs Artisan input", "Clarification deferred.") } }], deferredMarkers);
+        state.capture.clarification = null; state.capture.status = "review"; return addHistory(state, "Artisan deferred the clarification into visible draft markers.");
+      }
       case "APPLY_PROPOSAL": return apply(state);
       case "ACCEPT_WORDING": {
         const p = state.capture.proposal; const suggestion = p && p.suggestions && p.suggestions[0]; const line = suggestion && state.quote.lines.find(item => item.id === suggestion.lineId);
@@ -182,7 +188,10 @@ const CaptureModel = (() => {
   const lineAmount = line => line.inclusion && line.inclusion.value === "priced" && typeof (line.quantity && line.quantity.value) === "number" && typeof (line.unitPrice && line.unitPrice.value) === "number" ? Math.round(line.quantity.value * line.unitPrice.value) : null;
   const publicationBlockers = quote => {
     const required = [["Customer", quote.customer], ["Customer address", quote.customerAddress], ["payment terms", quote.paymentTerms], ["acceptance terms", quote.acceptanceTerms], ["validity", quote.validity], ["VAT treatment", quote.vat]];
-    quote.lines.forEach(line => { required.push([`${line.id} description`, line.description], [`${line.id} quantity`, line.quantity], [`${line.id} unit`, line.unit], [`${line.id} price`, line.unitPrice], [`${line.id} commercial treatment`, line.inclusion]); });
+    quote.lines.forEach(line => {
+      required.push([`${line.id} description`, line.description], [`${line.id} quantity`, line.quantity], [`${line.id} unit`, line.unit], [`${line.id} commercial treatment`, line.inclusion]);
+      if (!line.inclusion || !["included", "excluded"].includes(line.inclusion.value)) required.push([`${line.id} price`, line.unitPrice]);
+    });
     return [...quote.unresolved.map(item => item.field), ...required.filter(([, value]) => !value || value.value == null || value.value === "Needs Artisan input").map(([label]) => label)].filter((value, index, all) => all.indexOf(value) === index);
   };
   return { initial, lineAmount, publicationBlockers, reduce };
