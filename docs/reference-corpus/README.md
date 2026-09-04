@@ -40,7 +40,7 @@ Ces reconstructions sont des éléments de référence, pas des modèles, consei
 
 Les éléments suivants étaient indisponibles lors de la préparation :
 
-- un véritable catalogue ou tarif de menuisier, la source de prix fournie est une seule facture ;
+- aucun catalogue ou tarif n'a été obtenu du test Artisan au 24 août 2026, et aucune autorisation d'en conserver un dérivé assaini n'a donc pu être confirmée ; la seule source de prix disponible reste une facture ;
 - des `Quote` réellement rédigés en anglais ;
 - des devis en allemand ou italien ;
 - la suite d'un devis entre brouillon, publication, négociation avec le Customer et révision explicite ;
