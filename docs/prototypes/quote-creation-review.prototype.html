@@ -103,7 +103,35 @@
     .variant-title .context { max-width: 540px; color: var(--muted); font-size: 14px; line-height: 1.45; }
     .a-layout { display: grid; grid-template-columns: 295px minmax(0, 1fr); gap: 18px; }
     .a-side { align-self: start; position: sticky; top: 18px; }
-    .a-main { padding: 25px; }
+    .a-main { padding: 25px; min-width: 0; }
+    .workspace-tabs { display: flex; gap: 6px; margin-bottom: 18px; }
+    .workspace-tabs button { min-height: 44px; padding: 10px 23px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--muted); font-weight: 700; }
+    .workspace-tabs button[aria-selected="true"] { color: white; border-color: var(--accent); background: var(--accent); }
+    .working-preview { max-width: 920px; margin: 0 auto; }
+    .preview-note { padding: 14px 18px; margin-bottom: 15px; border-radius: 10px; background: var(--accent-soft); font-size: 13px; line-height: 1.5; }
+    .preview-note.warning { background: var(--warning-soft); color: #7d4c0e; }
+    .revision-history { margin-top: 20px; padding: 16px; box-shadow: none; }
+    .revision-history summary { cursor: pointer; font-size: 13px; font-weight: 700; }
+    .revision-history .button-row { margin-top: 12px; }
+    .paper { overflow-wrap: anywhere; }
+    .paper-table { table-layout: fixed; }
+    .paper-table th:first-child { width: 10%; }
+    .paper-table th:nth-child(2) { width: 45%; }
+    .paper-table th:nth-child(3) { width: 20%; }
+    .preview-totals { padding: 0 24px 24px; }
+    .topbar { padding: 15px 30px 0; }
+    @media (max-width: 850px) {
+      .a-main .line { grid-template-columns: 24px minmax(0, 1fr) minmax(0, 1fr) 30px; }
+      .a-main .line-description { grid-column: 2 / 4; }
+      .a-main .line .line-value:nth-of-type(2) { display: block; grid-column: 2; grid-row: 2; }
+      .a-main .line .line-value:nth-of-type(3) { display: block; grid-column: 3; grid-row: 2; }
+      .a-main .line .line-value:nth-of-type(4) { grid-column: 2 / 4; grid-row: 3; }
+      .a-main .line-remove { grid-column: 4; grid-row: 1; }
+      .working-preview .paper-head, .revision-history .paper-head { flex-direction: column; }
+      .working-preview .paper-table th, .working-preview .paper-table td, .revision-history .paper-table th, .revision-history .paper-table td { padding: 10px 6px; }
+      .working-preview .paper-table th:nth-child(3), .working-preview .paper-table td:nth-child(3) { display: table-cell; }
+      .topbar { padding: 12px 15px 0; }
+    }
     .b-layout { display: grid; grid-template-columns: minmax(270px, .78fr) minmax(0, 1.55fr); gap: 18px; align-items: start; }
     .b-feed { display: grid; gap: 0; overflow: hidden; }
     .b-feed > * { padding: 23px; border-bottom: 1px solid var(--line); }
@@ -169,6 +197,11 @@
     ];
     let state = { number: 'EQ-2026-0042', revision: 0, customer: 'Claire Martin', address: 'Rue des Alpes 12, 1004 Lausanne', project: 'Rénovation de la cuisine', language: 'Français', lines: structuredClone(initialLines), offline: false, published: false, dirty: false, message: 'Complète les lignes signalées pour publier la première révision.' };
     let undoState = null;
+    let workspaceTab = 'edit';
+    let captureText = '';
+    let revisions = [];
+    let viewedRevision = null;
+    let nextNumber = 43;
 
     const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const money = value => value === '' ? 'À compléter' : `CHF ${Number(value).toLocaleString('fr-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -176,7 +209,7 @@
     const subtotal = () => state.lines.reduce((sum, line) => sum + (line.state === 'priced' ? (lineTotal(line) || 0) : 0), 0);
     const vat = () => subtotal() * .081;
     const total = () => subtotal() + vat();
-    const hasMissing = () => state.lines.some(line => line.state === 'missing' || lineTotal(line) === null);
+    const hasMissing = () => !state.lines.length || state.lines.some(line => !line.description.trim() || line.state === 'missing' || lineTotal(line) === null || !Number.isFinite(lineTotal(line)) || Number(line.quantity) <= 0 || Number(line.price) < 0);
     const revisionLabel = () => state.revision ? `Révision ${state.revision}` : 'Brouillon';
     const statusText = () => state.offline ? 'Brouillon local' : (state.dirty ? 'Modification non publiée' : (state.published ? `Révision ${state.revision} publiée` : 'Brouillon'));
     const statusClass = () => state.offline ? 'offline' : (hasMissing() ? 'warn' : '');
@@ -186,8 +219,8 @@
         <div class="brand"><span class="brand-mark">EQ</span><span>Easy Quote</span></div>
         <div class="top-actions">
           <button class="button quiet" data-action="duplicate">Dupliquer</button>
-          <button class="button" data-action="pdf">Voir le PDF</button>
-          <button class="button primary" data-action="publish">Publier la révision</button>
+          <button class="button" data-action="history">Révisions publiées</button>
+          <button class="button primary" data-action="publish">${state.revision ? 'Publier la révision' : 'Publier la Quote'}</button>
         </div>
       </header>`;
     }
@@ -205,7 +238,7 @@
     function captureBox(compact = false) {
       return `<div class="capture-box">
         <p class="eyebrow">Saisie assistée</p>
-        <textarea data-capture placeholder="Ex. poser deux étagères en chêne à 240 CHF par pièce">${compact ? '' : ''}</textarea>
+        <textarea data-capture placeholder="Ex. poser deux étagères en chêne à 240 CHF par pièce">${esc(captureText)}</textarea>
         <div class="capture-foot"><small>Décris le travail comme tu le dirais sur place.<br>Les montants manquants resteront à compléter.</small><button class="mic" type="button" data-action="voice" aria-label="Démarrer la dictée">●</button></div>
         <div class="button-row" style="margin-top:10px"><button class="button primary" data-action="capture">Ajouter à la Quote</button><button class="button quiet" data-action="manual">+ Ligne manuelle</button></div>
       </div>`;
@@ -231,12 +264,21 @@
       return `<span class="status ${statusClass()}"><span class="dot"></span>${esc(statusText())}</span>`;
     }
     function actions() {
-      return `<div class="button-row"><button class="button primary" data-action="publish">${state.published ? 'Publier la révision' : 'Publier la Quote'}</button><button class="button" data-action="duplicate">Dupliquer</button><button class="button" data-action="pdf">Voir le Quote PDF</button></div>`;
+      return `<div class="button-row"><button class="button primary" data-action="publish">${state.revision ? 'Publier la révision' : 'Publier la Quote'}</button><button class="button" data-action="duplicate">Dupliquer</button></div>`;
+    }
+    function previewDocument(quote) {
+      const sum = quote.lines.reduce((amount, line) => amount + (line.state === 'priced' && Number.isFinite(lineTotal(line)) ? lineTotal(line) : 0), 0);
+      const missing = !quote.lines.length || quote.lines.some(line => line.state === 'missing' || !line.description.trim() || lineTotal(line) === null || !Number.isFinite(lineTotal(line)));
+      return `<article class="paper"><div class="paper-head"><div><p class="eyebrow">${esc(quote.number)}</p><div class="paper-title">Devis</div><p style="margin:8px 0">${esc(quote.project)}</p></div><div><strong>Atelier Exemple</strong><p class="muted">Entreprise fictive · Lausanne</p><strong>${esc(quote.customer)}</strong><p class="muted">${esc(quote.address)}</p></div></div>
+        <table class="paper-table"><thead><tr><th>N°</th><th>Description</th><th>Qté · unité</th><th>Montant CHF</th></tr></thead><tbody>${quote.lines.map((line, index) => `<tr><td>${index + 1}</td><td>${esc(line.description || 'Description à compléter')}${line.state === 'missing' ? '<br><span class="incomplete">À compléter</span>' : ''}</td><td>${esc(line.quantity || 'À compléter')} · ${esc(line.unit)}</td><td>${lineTotal(line) === null || !Number.isFinite(lineTotal(line)) ? '<span class="incomplete">À compléter</span>' : money(lineTotal(line))}</td></tr>`).join('')}</tbody></table>
+        <div class="preview-totals"><div class="totals"><div class="total-row"><span>Sous-total</span><span>${money(sum)}</span></div><div class="total-row"><span>TVA · 8.1%</span><span>${money(sum * .081)}</span></div><div class="total-row total"><span>${missing ? 'Total partiel' : 'Total'}</span><span>${money(sum * 1.081)}</span></div></div></div></article>`;
+    }
+    function revisionHistory() {
+      return `<details id="revision-history" class="surface revision-history" ${viewedRevision !== null ? 'open' : ''}><summary>Révisions publiées · ${revisions.length}</summary><p class="muted" style="font-size:12px;margin-top:12px">Instantanés conservés en mémoire pour cette démonstration. Aucun vrai PDF n'est généré.</p><div class="button-row">${revisions.length ? revisions.map((quote, index) => `<button class="button" data-action="revision" data-index="${index}">Révision ${quote.revision}</button>`).join('') : '<span class="muted">Aucune révision publiée.</span>'}</div>${viewedRevision !== null && revisions[viewedRevision] ? `<h3 style="margin-top:20px">Révision ${revisions[viewedRevision].revision} · Instantané publié, distinct du brouillon</h3>${previewDocument(revisions[viewedRevision])}` : ''}</details>`;
     }
     function variantA() {
-      return `${topbar()}<div class="shell">${titleBlock('Une prise en main guidée. Les informations de la Quote restent visibles pendant la saisie, avec les oublis directement dans la liste des travaux.')}
-        <div class="a-layout"><aside class="a-side"><div class="surface panel"><p class="eyebrow">Étape 2 sur 3</p><h2>Pour qui et où ?</h2>${customerFields()}<div class="section-label"><h3>État</h3></div>${statusPill()}<p class="muted" style="font-size:12px;line-height:1.4;margin:11px 0 0">Le numéro est réservé à la création de la Quote. La publication crée une révision conservée.</p></div></aside>
-        <section class="surface a-main"><div class="button-row" style="justify-content:space-between;margin-bottom:19px"><div><p class="eyebrow">Étape 3 sur 3</p><h2 style="margin-bottom:0">Décris le travail</h2></div>${statusPill()}</div>${captureBox()}${lineEditor()}<div class="button-row" style="justify-content:flex-end;margin-top:25px">${actions()}</div></section></div></div>`;
+      return `${topbar()}<div class="shell">${titleBlock('Saisis le travail dans Modifier, puis vérifie le document dans Aperçu. Les onglets conservent la saisie en cours.')}<div class="workspace-tabs" role="tablist" aria-label="Vue de la Quote"><button id="edit-tab" role="tab" aria-selected="${workspaceTab === 'edit'}" aria-controls="workspace-panel" data-tab="edit">Modifier</button><button id="preview-tab" role="tab" aria-selected="${workspaceTab === 'preview'}" aria-controls="workspace-panel" data-tab="preview">Aperçu</button></div>
+        <div id="workspace-panel" role="tabpanel" aria-labelledby="${workspaceTab}-tab">${workspaceTab === 'edit' ? `<div class="a-layout"><aside class="a-side"><div class="surface panel"><h2>Pour qui et où ?</h2>${customerFields()}<div class="section-label"><h3>État</h3></div>${statusPill()}</div></aside><section class="surface a-main"><h2>Décris le travail</h2>${captureBox()}${lineEditor()}<div class="button-row" style="justify-content:flex-end;margin-top:25px">${actions()}</div></section></div>` : `<section class="working-preview"><div class="preview-note ${hasMissing() ? 'warning' : ''}"><strong>Aperçu du contenu actuel · non publié</strong><br>${hasMissing() ? 'Des informations manquent. Les blancs restent visibles et la publication est bloquée.' : 'Cet aperçu inclut les modifications en cours. Publier conserve une nouvelle révision.'}<br>Maquette de document, pas le rendu PDF final. <button class="link-button" data-tab="edit">Revenir à Modifier</button></div>${previewDocument(state)}<div class="button-row" style="justify-content:flex-end;margin-top:20px">${actions()}</div></section>`}</div>${revisionHistory()}</div>`;
     }
     function variantB() {
       return `${topbar()}<div class="shell">${titleBlock('Le texte et la Quote avancent côte à côte. Cette option donne la priorité à la correction immédiate, sans faire passer l’Artisan par un assistant étape par étape.')}
@@ -273,6 +315,13 @@
       render();
     }
     document.addEventListener('click', event => {
+      const tabButton = event.target.closest('[data-tab]');
+      if (tabButton) {
+        workspaceTab = tabButton.dataset.tab;
+        render();
+        document.getElementById(`${workspaceTab}-tab`).focus();
+        return;
+      }
       const variantButton = event.target.closest('[data-variant]');
       if (variantButton) return changeVariant(variantButton.dataset.variant === 'next' ? 1 : -1);
       const actionButton = event.target.closest('[data-action]');
@@ -288,6 +337,7 @@
         const text = input && input.value.trim();
         if (!text) return announce('Écris ou dicte d’abord le travail à ajouter.');
         undoState = structuredClone(state);
+        captureText = '';
         state.lines.push({ description: text, quantity: '', unit: 'unité', price: '', mode: 'quantity', state: 'missing' });
         state.published = false; state.dirty = true;
         announce('Ligne ajoutée. Les informations non dites restent à compléter.');
@@ -299,17 +349,28 @@
         state.published = false; state.dirty = true;
         announce('Ligne supprimée.');
       } else if (action === 'undo') {
-        if (undoState) { state = undoState; undoState = null; announce('Dernière modification annulée.'); } else announce('Aucune modification à annuler.');
+        if (undoState) { const revision = state.revision; state = undoState; state.revision = revision; state.dirty = true; state.published = false; undoState = null; announce('Dernière modification annulée.'); } else announce('Aucune modification à annuler.');
       } else if (action === 'publish') {
-        if (hasMissing()) return announce('Publication bloquée. Complète les lignes signalées avant de publier.');
-        undoState = structuredClone(state);
+        if (state.offline) return announce('Publication indisponible sans connexion.');
+        if (hasMissing() || !state.customer.trim() || state.customer === 'Choisir un Customer') return announce('Publication bloquée. Complète le Customer et les lignes signalées.');
+        const commercial = quote => JSON.stringify([quote.customer, quote.address, quote.project, quote.language, quote.lines]);
+        if (revisions.length && commercial(revisions.at(-1)) === commercial(state)) return announce('Aucun changement à publier. La dernière révision reste disponible.');
         state.revision += 1;
         state.published = true; state.dirty = false;
-        announce(`Révision ${state.revision} publiée. Le PDF est conservé, la Quote reste modifiable.`);
+        revisions.push(structuredClone(state));
+        undoState = null;
+        announce(`Révision ${state.revision} conservée en mémoire. La Quote reste modifiable.`);
       } else if (action === 'duplicate') {
-        undoState = structuredClone(state);
-        state.number = 'EQ-2026-0043'; state.revision = 0; state.customer = 'Choisir un Customer'; state.project = 'Nouvelle Quote'; state.published = false; state.dirty = false; state.message = 'Nouvelle Quote créée à partir du contenu de la précédente.';
+        undoState = null; revisions = []; viewedRevision = null; workspaceTab = 'edit'; captureText = '';
+        state.number = `EQ-2026-${String(nextNumber++).padStart(4, '0')}`; state.revision = 0; state.customer = 'Choisir un Customer'; state.published = false; state.dirty = false; state.message = 'Nouvelle Quote créée à partir du contenu de la précédente.';
         announce('Nouvelle Quote créée avec un nouveau numéro, sans historique de révisions.');
+      } else if (action === 'history' || action === 'revision') {
+        if (action === 'revision') viewedRevision = Number(actionButton.dataset.index);
+        render();
+        const historyPanel = document.getElementById('revision-history');
+        if (historyPanel) { historyPanel.open = true; historyPanel.scrollIntoView({ block: 'start' }); }
+        else announce('Les révisions sont disponibles dans la variante A.');
+        return;
       } else if (action === 'pdf') {
         announce('Aperçu du Quote PDF simulé. La révision publiée reste téléchargeable.');
       } else if (action === 'offline') {
@@ -319,6 +380,7 @@
       render();
     });
     document.addEventListener('input', event => {
+      if (event.target.matches('[data-capture]')) captureText = event.target.value;
       const field = event.target.dataset.field;
       const lineIndex = event.target.dataset.line;
       if (field) { state[field] = event.target.value; state.published = false; state.dirty = true; }
@@ -331,10 +393,29 @@
       }
     });
     document.addEventListener('change', event => {
-      if (event.target.dataset.field || event.target.dataset.line !== undefined) render();
+      // Do not replace the clicked tab or next input during blur/change.
+      // Update calculated editor content without losing focus or capture text.
+      if (event.target.dataset.line !== undefined) {
+        const index = Number(event.target.dataset.line);
+        const row = event.target.closest('.line');
+        row.classList.toggle('needs-input', state.lines[index].state === 'missing');
+        const amount = row.querySelector('.line-value:last-of-type');
+        const value = lineTotal(state.lines[index]);
+        if (amount) amount.textContent = value === null ? 'À compléter' : money(value);
+        const badge = row.querySelector('.incomplete');
+        if (badge && state.lines[index].state !== 'missing') badge.remove();
+        if (!badge && state.lines[index].state === 'missing') row.querySelector('.line-description').insertAdjacentHTML('beforeend', '<span class="incomplete">À compléter</span>');
+        document.querySelectorAll('.a-main .total-row span:last-child').forEach((element, i) => element.textContent = money([subtotal(), vat(), total()][i]));
+      }
+      document.querySelectorAll('.status').forEach(element => { element.className = `status ${statusClass()}`; element.innerHTML = `<span class="dot"></span>${esc(statusText())}`; });
     });
     document.addEventListener('keydown', event => {
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      if (document.activeElement.matches('[role="tab"]')) {
+        event.preventDefault();
+        workspaceTab = workspaceTab === 'edit' ? 'preview' : 'edit';
+        render(); document.getElementById(`${workspaceTab}-tab`).focus(); return;
+      }
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable) return;
       event.preventDefault(); changeVariant(event.key === 'ArrowRight' ? 1 : -1);
     });
