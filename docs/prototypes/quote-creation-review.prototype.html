@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Easy Quote | Quote workspace prototype</title>
+  <style>
+    :root {
+      --ink: #17221f;
+      --muted: #68746f;
+      --line: #dce4df;
+      --paper: #fffefa;
+      --wash: #f1f5f1;
+      --wash-2: #e6eee8;
+      --accent: #176b52;
+      --accent-dark: #0d4d3a;
+      --accent-soft: #d9eee5;
+      --warning: #a96916;
+      --warning-soft: #fff0d3;
+      --danger: #a33e39;
+      --shadow: 0 18px 50px rgba(28, 52, 42, .09);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--wash);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--wash); }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .prototype-note { padding: 9px 20px; color: #eaf6f0; background: var(--accent-dark); font-size: 12px; letter-spacing: .02em; text-align: center; }
+    .shell { max-width: 1440px; margin: auto; padding: 22px 30px 110px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 750; letter-spacing: -.03em; }
+    .brand-mark { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 9px; background: var(--accent); color: white; font-weight: 800; }
+    .top-actions, .button-row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .button { border: 1px solid var(--line); border-radius: 9px; padding: 10px 14px; color: var(--ink); background: var(--paper); font-weight: 650; }
+    .button:hover { border-color: #9bb8a9; }
+    .button.primary { border-color: var(--accent); color: white; background: var(--accent); }
+    .button.primary:hover { background: var(--accent-dark); }
+    .button.quiet { border-color: transparent; background: transparent; color: var(--muted); }
+    .button.danger { color: var(--danger); }
+    .eyebrow { margin: 0 0 7px; color: var(--muted); font-size: 12px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 4px; font-size: clamp(25px, 3vw, 38px); letter-spacing: -.055em; line-height: 1.03; }
+    h2 { margin-bottom: 15px; font-size: 19px; letter-spacing: -.025em; }
+    h3 { margin-bottom: 7px; font-size: 14px; }
+    .muted { color: var(--muted); }
+    .surface { border: 1px solid var(--line); border-radius: 16px; background: var(--paper); box-shadow: var(--shadow); }
+    .panel { padding: 21px; }
+    .status { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border-radius: 99px; color: var(--accent-dark); background: var(--accent-soft); font-size: 12px; font-weight: 750; }
+    .status.warn { color: #7d4c0e; background: var(--warning-soft); }
+    .status.offline { color: #7f302d; background: #f9e2df; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .field { display: grid; gap: 5px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { color: var(--muted); font-size: 12px; font-weight: 650; }
+    .field input, .field select, .capture-input { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px 11px; color: var(--ink); background: #fff; }
+    .field input:focus, .field select:focus, .capture-input:focus { outline: 2px solid #a9d9c4; border-color: var(--accent); }
+    .capture-box { padding: 14px; border: 1px solid #b9d9ca; border-radius: 12px; background: #f4fbf7; }
+    .capture-box textarea { display: block; min-height: 76px; resize: vertical; border: 0; border-bottom: 1px solid #cbe4d7; padding: 2px 0 9px; width: 100%; color: var(--ink); background: transparent; }
+    .capture-box textarea:focus { outline: 0; border-color: var(--accent); }
+    .capture-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 11px; }
+    .capture-foot small { color: var(--muted); line-height: 1.3; }
+    .mic { display: inline-grid; place-items: center; width: 39px; height: 39px; border: 0; border-radius: 50%; color: white; background: var(--accent); font-size: 17px; }
+    .section-label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 25px 0 10px; }
+    .section-label h3 { margin: 0; }
+    .link-button { border: 0; padding: 0; color: var(--accent); background: transparent; font-size: 13px; font-weight: 700; }
+    .line-list { display: grid; gap: 9px; }
+    .line { display: grid; grid-template-columns: 34px minmax(190px, 1fr) 112px 105px 105px 32px; align-items: center; gap: 10px; padding: 12px 10px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+    .line.needs-input { border-color: #e4c58e; background: #fffaf0; }
+    .line-number { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .line-description { min-width: 0; }
+    .line-description input { width: 100%; border: 0; border-bottom: 1px solid transparent; padding: 1px 0; color: var(--ink); background: transparent; font-weight: 650; }
+    .line-description input:focus { outline: 0; border-color: var(--accent); }
+    .line-meta { display: block; color: var(--muted); font-size: 11px; }
+    .line-value { color: var(--ink); font-size: 13px; text-align: right; }
+    .line-value input { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 5px; text-align: right; }
+    .line-remove { width: 28px; height: 28px; border: 0; border-radius: 7px; color: var(--muted); background: transparent; }
+    .line-remove:hover { color: var(--danger); background: #faecea; }
+    .incomplete { display: inline-flex; margin-top: 6px; padding: 3px 6px; border-radius: 5px; color: var(--warning); background: var(--warning-soft); font-size: 10px; font-weight: 750; }
+    .totals { display: grid; gap: 8px; margin-top: 17px; margin-left: auto; max-width: 315px; }
+    .total-row { display: flex; justify-content: space-between; gap: 15px; color: var(--muted); font-size: 13px; }
+    .total-row.total { padding-top: 10px; border-top: 1px solid var(--line); color: var(--ink); font-size: 18px; font-weight: 800; }
+    .assist-message { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 21px; margin: 10px 0 0; color: var(--accent-dark); font-size: 12px; }
+    .checklist { display: grid; gap: 10px; }
+    .check { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; line-height: 1.35; }
+    .check-icon { display: grid; place-items: center; flex: 0 0 auto; width: 19px; height: 19px; border-radius: 50%; color: white; background: var(--accent); font-size: 12px; }
+    .check-icon.pending { color: var(--warning); background: var(--warning-soft); }
+    .activity { display: grid; gap: 12px; }
+    .activity-item { display: grid; grid-template-columns: 9px 1fr; gap: 10px; font-size: 13px; line-height: 1.35; }
+    .activity-item::before { content: ""; width: 7px; height: 7px; margin-top: 5px; border-radius: 50%; background: var(--accent); }
+    .activity-item small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .paper { border: 1px solid var(--line); background: #fff; box-shadow: 0 14px 35px rgba(28, 52, 42, .08); }
+    .paper-head { display: flex; justify-content: space-between; gap: 20px; padding: 28px 30px 22px; border-bottom: 3px solid var(--accent); }
+    .paper-title { font-size: 26px; font-weight: 800; letter-spacing: -.04em; }
+    .paper-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .paper-table th { color: var(--muted); font-size: 11px; text-align: left; text-transform: uppercase; letter-spacing: .06em; }
+    .paper-table th, .paper-table td { padding: 12px 30px; border-bottom: 1px solid var(--line); }
+    .paper-table th:last-child, .paper-table td:last-child { text-align: right; }
+    .paper-total { display: flex; justify-content: flex-end; padding: 17px 30px 24px; font-size: 17px; font-weight: 800; }
+    .variant-title { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 20px; }
+    .variant-title .context { max-width: 540px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .a-layout { display: grid; grid-template-columns: 295px minmax(0, 1fr); gap: 18px; }
+    .a-side { align-self: start; position: sticky; top: 18px; }
+    .a-main { padding: 25px; }
+    .b-layout { display: grid; grid-template-columns: minmax(270px, .78fr) minmax(0, 1.55fr); gap: 18px; align-items: start; }
+    .b-feed { display: grid; gap: 0; overflow: hidden; }
+    .b-feed > * { padding: 23px; border-bottom: 1px solid var(--line); }
+    .b-feed > *:last-child { border-bottom: 0; }
+    .b-quote { padding: 23px; }
+    .b-quote .line { grid-template-columns: 28px minmax(130px, 1fr) 85px 85px 30px; }
+    .b-quote .line .line-value:nth-of-type(2), .b-quote .line .line-value:nth-of-type(3) { display: none; }
+    .b-quote .line-meta { display: none; }
+    .c-layout { display: grid; grid-template-columns: minmax(0, 1fr) 285px; gap: 18px; align-items: start; }
+    .c-main { padding: 0; }
+    .c-paper { max-width: 850px; margin: 0 auto; }
+    .c-sidebar { padding: 20px; position: sticky; top: 18px; }
+    .c-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 17px; border: 1px solid var(--line); border-bottom: 0; border-radius: 14px 14px 0 0; background: var(--paper); }
+    .c-lines { padding: 20px; background: var(--paper); }
+    .c-lines .line { grid-template-columns: 34px minmax(150px, 1fr) 100px 30px; }
+    .c-lines .line .line-value:nth-of-type(2), .c-lines .line .line-value:nth-of-type(3) { display: none; }
+    .bottom-switcher { position: fixed; z-index: 5; left: 50%; bottom: 20px; display: flex; align-items: center; gap: 9px; transform: translateX(-50%); padding: 7px 9px; border: 1px solid #315f4f; border-radius: 99px; color: white; background: #17382e; box-shadow: 0 10px 30px rgba(15, 43, 33, .3); }
+    .bottom-switcher button { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 50%; color: white; background: #2b5a4a; font-size: 18px; }
+    .bottom-switcher button:hover { background: #427664; }
+    .switch-label { min-width: 155px; font-size: 12px; text-align: center; }
+    .toast { position: fixed; z-index: 6; right: 22px; bottom: 84px; max-width: 310px; padding: 13px 15px; border: 1px solid #abd2bd; border-radius: 10px; color: var(--accent-dark); background: #effaf4; box-shadow: var(--shadow); font-size: 13px; }
+    .hide { display: none !important; }
+    @media (max-width: 850px) {
+      .shell { padding: 18px 15px 110px; }
+      .topbar { align-items: flex-start; }
+      .top-actions .button:not(.primary) { display: none; }
+      .a-layout, .b-layout, .c-layout { grid-template-columns: 1fr; }
+      .a-side, .c-sidebar { position: static; }
+      .variant-title { display: block; }
+      .variant-title .context { margin-top: 9px; }
+      .line { grid-template-columns: 27px minmax(120px, 1fr) 83px 30px; }
+      .line .line-value:nth-of-type(2), .line .line-value:nth-of-type(3) { display: none; }
+      .line-meta { display: block; }
+      .panel, .a-main, .b-quote { padding: 17px; }
+      .paper-head { padding: 22px 18px 17px; }
+      .paper-table th, .paper-table td { padding: 10px 18px; }
+      .paper-table th:nth-child(3), .paper-table td:nth-child(3) { display: none; }
+      .c-lines { padding: 13px; }
+      .bottom-switcher { bottom: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-note">THROWAWAY PROTOTYPE · Quote creation and review · Nothing here is saved</div>
+  <main id="app"></main>
+  <div id="toast" class="toast hide"></div>
+  <nav class="bottom-switcher" aria-label="Prototype variants">
+    <button type="button" data-variant="previous" aria-label="Previous variant">←</button>
+    <span class="switch-label" id="switch-label"></span>
+    <button type="button" data-variant="next" aria-label="Next variant">→</button>
+  </nav>
+  <script>
+    /* Question: Which interaction makes it quickest and safest for an Artisan to capture work on a phone, review and correct a Quote, then publish, duplicate, or revise it on either phone or desktop? Three alternative page structures are shown below. */
+    const variants = [
+      { key: 'A', name: 'Guided capture' },
+      { key: 'B', name: 'Split workspace' },
+      { key: 'C', name: 'Document first' }
+    ];
+    const initialLines = [
+      { description: 'Dépose et évacuation des éléments existants', quantity: '1', unit: 'forfait', price: '680.00', mode: 'fixed', state: 'priced' },
+      { description: 'Fabrication et pose de meubles bas en chêne', quantity: '4', unit: 'm', price: '520.00', mode: 'quantity', state: 'priced' },
+      { description: 'Plan de travail en hêtre massif', quantity: '', unit: 'm', price: '', mode: 'quantity', state: 'missing' }
+    ];
+    let state = { number: 'EQ-2026-0042', revision: 0, customer: 'Claire Martin', address: 'Rue des Alpes 12, 1004 Lausanne', project: 'Rénovation de la cuisine', language: 'Français', lines: structuredClone(initialLines), offline: false, published: false, dirty: false, message: 'Complète les lignes signalées pour publier la première révision.' };
+    let undoState = null;
+
+    const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    const money = value => value === '' ? 'À compléter' : `CHF ${Number(value).toLocaleString('fr-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const lineTotal = line => line.price === '' || line.quantity === '' ? null : (line.mode === 'fixed' ? Number(line.price) : Number(line.price) * Number(line.quantity));
+    const subtotal = () => state.lines.reduce((sum, line) => sum + (line.state === 'priced' ? (lineTotal(line) || 0) : 0), 0);
+    const vat = () => subtotal() * .081;
+    const total = () => subtotal() + vat();
+    const hasMissing = () => state.lines.some(line => line.state === 'missing' || lineTotal(line) === null);
+    const revisionLabel = () => state.revision ? `Révision ${state.revision}` : 'Brouillon';
+    const statusText = () => state.offline ? 'Brouillon local' : (state.dirty ? 'Modification non publiée' : (state.published ? `Révision ${state.revision} publiée` : 'Brouillon'));
+    const statusClass = () => state.offline ? 'offline' : (hasMissing() ? 'warn' : '');
+
+    function topbar() {
+      return `<header class="topbar">
+        <div class="brand"><span class="brand-mark">EQ</span><span>Easy Quote</span></div>
+        <div class="top-actions">
+          <button class="button quiet" data-action="duplicate">Dupliquer</button>
+          <button class="button" data-action="pdf">Voir le PDF</button>
+          <button class="button primary" data-action="publish">Publier la révision</button>
+        </div>
+      </header>`;
+    }
+    function titleBlock(intro) {
+      return `<div class="variant-title"><div><p class="eyebrow">Quote ${esc(state.number)} · ${revisionLabel()}</p><h1>${esc(state.project)}</h1></div><p class="context">${intro}</p></div>`;
+    }
+    function customerFields() {
+      return `<div class="field-grid">
+        <div class="field"><label for="customer">Customer</label><input id="customer" data-field="customer" value="${esc(state.customer)}"></div>
+        <div class="field"><label for="language">Langue de la Quote</label><select id="language" data-field="language"><option ${state.language === 'Français' ? 'selected' : ''}>Français</option><option ${state.language === 'English' ? 'selected' : ''}>English</option></select></div>
+        <div class="field full"><label for="address">Adresse du chantier</label><input id="address" data-field="address" value="${esc(state.address)}"></div>
+        <div class="field full"><label for="project">Projet</label><input id="project" data-field="project" value="${esc(state.project)}"></div>
+      </div>`;
+    }
+    function captureBox(compact = false) {
+      return `<div class="capture-box">
+        <p class="eyebrow">Saisie assistée</p>
+        <textarea data-capture placeholder="Ex. poser deux étagères en chêne à 240 CHF par pièce">${compact ? '' : ''}</textarea>
+        <div class="capture-foot"><small>Décris le travail comme tu le dirais sur place.<br>Les montants manquants resteront à compléter.</small><button class="mic" type="button" data-action="voice" aria-label="Démarrer la dictée">●</button></div>
+        <div class="button-row" style="margin-top:10px"><button class="button primary" data-action="capture">Ajouter à la Quote</button><button class="button quiet" data-action="manual">+ Ligne manuelle</button></div>
+      </div>`;
+    }
+    function lineMarkup(line, index, compact = false) {
+      const value = lineTotal(line);
+      return `<div class="line ${line.state === 'missing' || value === null ? 'needs-input' : ''}">
+        <span class="line-number">${String(index + 1).padStart(2, '0')}</span>
+        <div class="line-description"><input data-line="${index}" data-prop="description" value="${esc(line.description)}"><span class="line-meta">${esc(line.quantity || '—')} ${esc(line.unit || 'unité')} · ${line.mode === 'fixed' ? 'forfait' : 'prix unitaire'}</span>${line.state === 'missing' || value === null ? '<span class="incomplete">À compléter</span>' : ''}</div>
+        <div class="line-value"><input aria-label="Quantité ligne ${index + 1}" data-line="${index}" data-prop="quantity" value="${esc(line.quantity)}" placeholder="Qté"></div>
+        <div class="line-value"><input aria-label="Prix ligne ${index + 1}" data-line="${index}" data-prop="price" value="${esc(line.price)}" placeholder="Prix"></div>
+        <div class="line-value">${value === null ? '<span class="muted">—</span>' : money(value)}</div>
+        <button class="line-remove" data-action="remove" data-index="${index}" aria-label="Supprimer la ligne ${index + 1}">×</button>
+      </div>`;
+    }
+    function lineEditor(compact = false) {
+      return `<div class="section-label"><h3>Travaux proposés</h3><button class="link-button" data-action="manual">+ Ajouter une ligne</button></div>
+        <div class="line-list">${state.lines.map((line, index) => lineMarkup(line, index, compact)).join('')}</div>
+        <div class="assist-message"><span>${esc(state.message)}</span><button class="link-button" data-action="undo">Annuler</button></div>
+        <div class="totals"><div class="total-row"><span>Sous-total</span><span>${money(subtotal())}</span></div><div class="total-row"><span>TVA · 8.1%</span><span>${money(vat())}</span></div><div class="total-row total"><span>Total Quote</span><span>${money(total())}</span></div></div>`;
+    }
+    function statusPill() {
+      return `<span class="status ${statusClass()}"><span class="dot"></span>${esc(statusText())}</span>`;
+    }
+    function actions() {
+      return `<div class="button-row"><button class="button primary" data-action="publish">${state.published ? 'Publier la révision' : 'Publier la Quote'}</button><button class="button" data-action="duplicate">Dupliquer</button><button class="button" data-action="pdf">Voir le Quote PDF</button></div>`;
+    }
+    function variantA() {
+      return `${topbar()}<div class="shell">${titleBlock('Une prise en main guidée. Les informations de la Quote restent visibles pendant la saisie, avec les oublis directement dans la liste des travaux.')}
+        <div class="a-layout"><aside class="a-side"><div class="surface panel"><p class="eyebrow">Étape 2 sur 3</p><h2>Pour qui et où ?</h2>${customerFields()}<div class="section-label"><h3>État</h3></div>${statusPill()}<p class="muted" style="font-size:12px;line-height:1.4;margin:11px 0 0">Le numéro est réservé à la création de la Quote. La publication crée une révision conservée.</p></div></aside>
+        <section class="surface a-main"><div class="button-row" style="justify-content:space-between;margin-bottom:19px"><div><p class="eyebrow">Étape 3 sur 3</p><h2 style="margin-bottom:0">Décris le travail</h2></div>${statusPill()}</div>${captureBox()}${lineEditor()}<div class="button-row" style="justify-content:flex-end;margin-top:25px">${actions()}</div></section></div></div>`;
+    }
+    function variantB() {
+      return `${topbar()}<div class="shell">${titleBlock('Le texte et la Quote avancent côte à côte. Cette option donne la priorité à la correction immédiate, sans faire passer l’Artisan par un assistant étape par étape.')}
+        <div class="b-layout"><section class="surface b-feed"><div><p class="eyebrow">Nouvelle Quote</p><h2 style="margin-bottom:5px">${esc(state.customer)}</h2><p class="muted" style="font-size:13px;margin-bottom:15px">${esc(state.address)}</p>${customerFields()}</div><div>${captureBox(true)}</div><div><p class="eyebrow">Dernière activité</p><div class="activity"><div class="activity-item"><div>La Quote a été créée avec le numéro <strong>${esc(state.number)}</strong><small>Il y a 3 min</small></div></div><div class="activity-item"><div>Révision ${state.revision} publiée, toujours modifiable<small>Il y a 1 min</small></div></div></div></div></section>
+        <section class="surface b-quote"><div class="button-row" style="justify-content:space-between;margin-bottom:19px"><div><p class="eyebrow">Édition directe</p><h2 style="margin-bottom:0">Lignes de la Quote</h2></div>${statusPill()}</div>${lineEditor(true)}<div class="button-row" style="justify-content:flex-end;margin-top:25px">${actions()}</div></section></div></div>`;
+    }
+    function paperLines() {
+      return `<table class="paper-table"><thead><tr><th>N°</th><th>Description</th><th>Qté · unité</th><th>Montant</th></tr></thead><tbody>${state.lines.map((line, i) => `<tr><td>${String(i + 1).padStart(2, '0')}</td><td><strong>${esc(line.description)}</strong>${line.state === 'missing' ? '<br><span class="incomplete">Prix à compléter</span>' : ''}</td><td>${esc(line.quantity || '—')} · ${esc(line.unit || '—')}</td><td>${lineTotal(line) === null ? '—' : money(lineTotal(line))}</td></tr>`).join('')}</tbody></table><div class="paper-total">Total Quote&nbsp;&nbsp; ${money(total())}</div>`;
+    }
+    function variantC() {
+      return `${topbar()}<div class="shell">${titleBlock('Une feuille prête à être relue. Les commandes restent dans une barre courte et les contrôles de publication sont regroupés à droite, comme une dernière vérification.')}
+        <div class="c-layout"><section class="c-main"><div class="c-toolbar"><div>${statusPill()} <span class="muted" style="font-size:12px;margin-left:7px">${esc(state.language)} · CHF</span></div><div class="button-row"><button class="button quiet" data-action="duplicate">Dupliquer</button><button class="button" data-action="pdf">PDF</button><button class="button primary" data-action="publish">Publier</button></div></div><div class="paper c-paper"><div class="paper-head"><div><p class="eyebrow">${esc(state.number)} · ${revisionLabel()}</p><div class="paper-title">Quote</div><p class="muted" style="margin:7px 0 0">${esc(state.project)}</p></div><div style="text-align:right;font-size:13px"><strong>Atelier Bise</strong><br><span class="muted">Lausanne · Suisse</span><br><span class="muted">Pour ${esc(state.customer)}</span></div></div>${paperLines()}</div><div class="surface panel" style="margin-top:15px">${captureBox(true)}<div class="section-label"><h3>Modifier les lignes</h3><button class="link-button" data-action="manual">+ Ligne manuelle</button></div><div class="line-list">${state.lines.map((line, index) => lineMarkup(line, index, true)).join('')}</div><p class="assist-message">${esc(state.message)}</p></div></section>
+        <aside class="surface c-sidebar"><p class="eyebrow">Avant publication</p><h2>Vérification</h2><div class="checklist"><div class="check"><span class="check-icon">✓</span><span>Customer et adresse du chantier</span></div><div class="check"><span class="check-icon">✓</span><span>Business Identity Snapshot</span></div><div class="check"><span class="check-icon ${hasMissing() ? 'pending' : ''}">${hasMissing() ? '!' : '✓'}</span><span>${hasMissing() ? 'Compléter les lignes signalées' : 'Toutes les lignes sont chiffrées'}</span></div><div class="check"><span class="check-icon">✓</span><span>Conditions de paiement et validité</span></div></div><hr style="border:0;border-top:1px solid var(--line);margin:22px 0"><p class="eyebrow">Récupération</p><p class="muted" style="font-size:13px;line-height:1.4">Les modifications non envoyées restent sur cet appareil pendant une courte perte de connexion.</p><button class="button" style="width:100%;margin-top:5px" data-action="offline">${state.offline ? 'Rétablir la connexion' : 'Simuler une perte de connexion'}</button><hr style="border:0;border-top:1px solid var(--line);margin:22px 0"><p class="eyebrow">Historique</p><p style="font-size:13px;margin-bottom:5px"><strong>Révision ${state.revision}</strong></p><p class="muted" style="font-size:12px">PDF conservé séparément de la Quote modifiable.</p></aside></div></div>`;
+    }
+    function render() {
+      const key = new URLSearchParams(location.search).get('variant') || 'A';
+      const current = variants.some(v => v.key === key) ? key : 'A';
+      document.getElementById('app').innerHTML = current === 'A' ? variantA() : current === 'B' ? variantB() : variantC();
+      document.getElementById('switch-label').textContent = `${current} · ${variants.find(v => v.key === current).name}`;
+    }
+    function announce(message) {
+      state.message = message;
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.remove('hide');
+      window.clearTimeout(announce.timer);
+      announce.timer = window.setTimeout(() => toast.classList.add('hide'), 3600);
+    }
+    function changeVariant(direction) {
+      const current = new URLSearchParams(location.search).get('variant') || 'A';
+      const index = variants.findIndex(v => v.key === current);
+      const next = variants[(index + direction + variants.length) % variants.length].key;
+      history.replaceState({}, '', `${location.pathname}?variant=${next}`);
+      render();
+    }
+    document.addEventListener('click', event => {
+      const variantButton = event.target.closest('[data-variant]');
+      if (variantButton) return changeVariant(variantButton.dataset.variant === 'next' ? 1 : -1);
+      const actionButton = event.target.closest('[data-action]');
+      if (!actionButton) return;
+      const action = actionButton.dataset.action;
+      if (action === 'manual') {
+        undoState = structuredClone(state);
+        state.lines.push({ description: 'Nouvelle ligne à décrire', quantity: '', unit: 'unité', price: '', mode: 'quantity', state: 'missing' });
+        state.published = false; state.dirty = true;
+        announce('Ligne manuelle ajoutée. Décris-la et complète son prix.');
+      } else if (action === 'capture') {
+        const input = document.querySelector('[data-capture]');
+        const text = input && input.value.trim();
+        if (!text) return announce('Écris ou dicte d’abord le travail à ajouter.');
+        undoState = structuredClone(state);
+        state.lines.push({ description: text, quantity: '', unit: 'unité', price: '', mode: 'quantity', state: 'missing' });
+        state.published = false; state.dirty = true;
+        announce('Ligne ajoutée. Les informations non dites restent à compléter.');
+      } else if (action === 'voice') {
+        announce('Dictée simulée. Essaie ensuite « poser deux étagères en chêne ».');
+      } else if (action === 'remove') {
+        undoState = structuredClone(state);
+        state.lines.splice(Number(actionButton.dataset.index), 1);
+        state.published = false; state.dirty = true;
+        announce('Ligne supprimée.');
+      } else if (action === 'undo') {
+        if (undoState) { state = undoState; undoState = null; announce('Dernière modification annulée.'); } else announce('Aucune modification à annuler.');
+      } else if (action === 'publish') {
+        if (hasMissing()) return announce('Publication bloquée. Complète les lignes signalées avant de publier.');
+        undoState = structuredClone(state);
+        state.revision += 1;
+        state.published = true; state.dirty = false;
+        announce(`Révision ${state.revision} publiée. Le PDF est conservé, la Quote reste modifiable.`);
+      } else if (action === 'duplicate') {
+        undoState = structuredClone(state);
+        state.number = 'EQ-2026-0043'; state.revision = 0; state.customer = 'Choisir un Customer'; state.project = 'Nouvelle Quote'; state.published = false; state.dirty = false; state.message = 'Nouvelle Quote créée à partir du contenu de la précédente.';
+        announce('Nouvelle Quote créée avec un nouveau numéro, sans historique de révisions.');
+      } else if (action === 'pdf') {
+        announce('Aperçu du Quote PDF simulé. La révision publiée reste téléchargeable.');
+      } else if (action === 'offline') {
+        state.offline = !state.offline;
+        announce(state.offline ? 'Connexion interrompue. Les modifications restent dans le brouillon local.' : 'Connexion rétablie. Le brouillon local peut être synchronisé.');
+      }
+      render();
+    });
+    document.addEventListener('input', event => {
+      const field = event.target.dataset.field;
+      const lineIndex = event.target.dataset.line;
+      if (field) { state[field] = event.target.value; state.published = false; state.dirty = true; }
+      if (lineIndex !== undefined) {
+        undoState = undoState || structuredClone(state);
+        const line = state.lines[Number(lineIndex)];
+        line[event.target.dataset.prop] = event.target.value;
+        line.state = line.description.trim() && lineTotal(line) !== null ? 'priced' : 'missing';
+        state.published = false; state.dirty = true;
+      }
+    });
+    document.addEventListener('change', event => {
+      if (event.target.dataset.field || event.target.dataset.line !== undefined) render();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable) return;
+      event.preventDefault(); changeVariant(event.key === 'ArrowRight' ? 1 : -1);
+    });
+    render();
+  </script>
+</body>
+</html>
