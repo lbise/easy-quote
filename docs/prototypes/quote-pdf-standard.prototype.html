@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quote PDF standard, prototype</title>
+<style>
+  :root { --ink:#20262a; --muted:#667177; --rule:#cbd1d2; --paper:#fff; --wash:#f2f4f3; --accent:#4b6b58; --section:#3d4942; }
+  * { box-sizing:border-box; }
+  body { margin:0; color:var(--ink); background:#dfe3e2; font:14px/1.45 Arial, Helvetica, sans-serif; }
+  button, select, input { font:inherit; }
+  .prototype-ui { max-width:1120px; margin:22px auto 18px; padding:0 20px; }
+  .prototype-label { margin:0 0 12px; font-size:11px; font-weight:700; letter-spacing:.08em; color:#374047; }
+  .controls { display:flex; gap:12px; align-items:end; flex-wrap:wrap; padding:14px 16px; background:#fff; border:1px solid #c9cfcd; border-radius:8px; box-shadow:0 3px 12px #27322d14; }
+  .control { display:grid; gap:4px; font-size:12px; color:#3d474d; }
+  .control label { font-weight:700; }
+  .control select { min-width:145px; padding:6px 8px; border:1px solid #aeb8b6; border-radius:4px; background:#fff; }
+  .check { display:flex; align-items:center; gap:6px; padding:7px 0; white-space:nowrap; }
+  details { margin-top:12px; padding:10px 14px; background:#edf0ef; border:1px solid #cdd3d1; border-radius:6px; color:#344044; font-size:12px; }
+  summary { cursor:pointer; font-weight:700; }
+  .audit-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:8px 18px; margin:9px 0 0; }
+  .audit-grid p { margin:0; }
+  .stage { display:flex; flex-direction:column; align-items:center; gap:18px; padding:0 20px 86px; }
+  .page { position:relative; width:210mm; height:297mm; overflow:hidden; padding:15mm 16mm 14mm; background:var(--paper); box-shadow:0 6px 20px #1f292429; page-break-after:always; break-after:page; }
+  .document { font-size:9.2pt; line-height:1.33; }
+  .document h1, .document h2, .document h3, .document p { margin-top:0; }
+  .doc-top { display:flex; justify-content:space-between; gap:12mm; padding-bottom:4mm; border-bottom:1.2px solid var(--ink); }
+  .brand { display:flex; align-items:center; gap:8px; min-width:0; }
+  .brand-mark { display:none; width:28px; height:28px; border:2px solid var(--accent); border-radius:50%; color:var(--accent); align-items:center; justify-content:center; font-size:14px; font-weight:700; }
+  .with-logo .brand-mark { display:flex; }
+  .business-name { font-size:12pt; font-weight:700; letter-spacing:.02em; }
+  .business-detail { color:var(--muted); font-size:8pt; }
+  .document-id { text-align:right; font-size:8.2pt; white-space:nowrap; }
+  .document-id strong { display:block; font-size:10.5pt; }
+  .document-id span { display:block; color:var(--muted); }
+  .doc-type { margin:7mm 0 5mm; display:flex; justify-content:space-between; align-items:baseline; }
+  .doc-type h1 { margin:0; font-size:20pt; letter-spacing:.04em; font-weight:500; }
+  .currency { color:var(--muted); font-size:8pt; }
+  .identity-grid { display:grid; grid-template-columns:1fr 1fr; gap:10mm; margin-bottom:5mm; }
+  .identity-grid section { min-width:0; }
+  .eyebrow { margin:0 0 1.5mm; color:var(--muted); font-weight:700; font-size:7.2pt; letter-spacing:.07em; text-transform:uppercase; }
+  address { margin:0; font-style:normal; }
+  .project { padding:3.5mm 4mm; margin:0 0 5mm; border-left:3px solid var(--accent); background:var(--wash); }
+  .project strong { display:block; margin-bottom:1mm; }
+  .project p { margin:0; }
+  table { width:100%; border-collapse:collapse; }
+  th { padding:2.2mm 1.5mm; border-top:1px solid var(--ink); border-bottom:1px solid var(--ink); color:#384146; font-size:7.1pt; letter-spacing:.04em; text-align:left; text-transform:uppercase; }
+  td { padding:2.25mm 1.5mm; border-bottom:.6px solid var(--rule); vertical-align:top; }
+  .n { width:7%; color:var(--muted); }
+  .unit { width:8%; white-space:nowrap; }
+  .qty { width:9%; text-align:right; white-space:nowrap; }
+  .rate { width:15%; text-align:right; white-space:nowrap; }
+  .amount { width:16%; text-align:right; white-space:nowrap; font-weight:700; }
+  .line-title { display:block; font-weight:700; }
+  .line-detail { display:block; margin-top:1mm; color:#586267; font-size:8pt; line-height:1.27; }
+  .status { display:inline-block; margin-top:1mm; color:#4d575b; font-size:7pt; font-weight:700; letter-spacing:.03em; text-transform:uppercase; }
+  .optional-row td { background:#fafafa; }
+  .continued-row td { background:var(--wash); }
+  .excluded-row td { color:#697376; }
+  .section-row td { padding:3mm 1.5mm 1.5mm; border-bottom:0; color:var(--section); font-size:8pt; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+  .section-subtotal td { padding:1.6mm 1.5mm 2.5mm; color:#4c565a; font-size:8pt; font-weight:700; }
+  .section-subtotal td:last-child { text-align:right; }
+  .totals { width:94mm; margin:5mm 0 0 auto; break-inside:avoid; page-break-inside:avoid; }
+  .totals td { padding:1.6mm 1.8mm; border:0; }
+  .totals td:last-child { text-align:right; white-space:nowrap; }
+  .totals .discount td { border-top:.6px solid var(--rule); }
+  .totals .grand td { padding-top:2.5mm; border-top:1.4px solid var(--ink); font-size:11pt; font-weight:700; }
+  .vat-note { margin:1.5mm 0 0 auto; width:75mm; color:var(--muted); font-size:7.4pt; text-align:right; }
+  .terms { margin-top:5mm; padding-top:3mm; border-top:1px solid var(--ink); }
+  .terms h2, .technical h2 { margin:0 0 2mm; font-size:9pt; letter-spacing:.04em; text-transform:uppercase; }
+  .terms p, .technical p { margin:0 0 2.2mm; }
+  .terms strong { font-weight:700; }
+  .terms-columns { columns:2; column-gap:8mm; }
+  .terms-columns p { break-inside:avoid; }
+  .footer { position:absolute; bottom:7mm; left:16mm; right:16mm; display:flex; justify-content:space-between; padding-top:2mm; border-top:.6px solid var(--rule); color:#667074; font-size:7.3pt; }
+  .continuation { margin:0 0 4mm; color:#596368; font-size:8pt; }
+  .summary-hero { margin:6mm 0 5mm; padding:5mm; background:var(--ink); color:#fff; }
+  .summary-hero .eyebrow { color:#dce3de; }
+  .summary-hero h1 { margin:0 0 2mm; font-size:19pt; font-weight:500; }
+  .summary-hero p { margin:0; max-width:116mm; }
+  .price-callout { display:flex; align-items:end; justify-content:space-between; gap:8mm; padding:5mm; margin:5mm 0; border:1.3px solid var(--ink); }
+  .price-callout p { margin:0; }
+  .price-callout strong { display:block; font-size:19pt; white-space:nowrap; }
+  .summary-list { display:grid; grid-template-columns:1.15fr .85fr; gap:10mm; margin-top:5mm; }
+  .summary-list section { border-top:1px solid var(--ink); padding-top:2.5mm; }
+  .summary-list h2 { margin:0 0 2mm; font-size:9pt; text-transform:uppercase; letter-spacing:.04em; }
+  .summary-list ul { margin:0; padding-left:4mm; }
+  .summary-list li { margin-bottom:1.3mm; }
+  .summary-list .fine { color:var(--muted); font-size:8pt; }
+  .scope-band { padding:3.5mm 4mm; background:var(--wash); border-top:1px solid var(--ink); border-bottom:1px solid var(--ink); }
+  .scope-band p { margin:0; }
+  .technical { margin:5mm 0 0; }
+  .technical .lead { font-size:10pt; line-height:1.42; }
+  .technical .note { padding:3mm 4mm; margin:3mm 0; border-left:3px solid var(--accent); background:var(--wash); }
+  .technical .note p:last-child { margin-bottom:0; }
+  .compact-meta { display:flex; justify-content:space-between; gap:6mm; padding:2mm 0 3mm; color:#586267; font-size:8pt; }
+  .signature { margin-top:5mm; padding-top:3mm; border-top:1px solid var(--ink); }
+  .signature-line { width:72mm; margin-top:9mm; border-bottom:1px solid var(--ink); }
+  .layout-A .doc-type { margin:4mm 0 3mm; }
+  .layout-A .project { margin-bottom:3mm; padding:2mm 3mm; }
+  .layout-A td { padding:1.5mm; }
+  .layout-A .status { margin-top:.5mm; }
+  .priced-row .status { display:none; }
+  .layout-A .terms { margin-top:3mm; padding-top:2mm; }
+  .layout-A .terms p { margin-bottom:1.5mm; }
+  .layout-A .identity-grid + .currency { display:none; }
+  .layout-A .signature { margin-top:3mm; }
+  .layout-A .signature-line { margin-top:6mm; }
+  .line-block { margin:3mm 0; border-bottom:1px solid var(--rule); padding:0 0 3mm; }
+  .line-block h3 { margin:0 0 2mm; font-size:11pt; font-weight:600; }
+  .line-block p { margin:0 0 2mm; font-size:9.5pt; }
+  .line-block .commercial { display:flex; justify-content:space-between; gap:3mm; font-size:8.5pt; }
+  .section-title { margin:5mm 0 3mm; padding:2mm 0; border-top:2px solid var(--accent); color:var(--section); font-size:12pt; }
+  .line-block .continued { font-size:8pt; color:var(--muted); }
+  .switcher { position:fixed; z-index:5; left:50%; bottom:16px; transform:translateX(-50%); display:flex; align-items:center; gap:2px; padding:5px; border:1px solid #111; border-radius:999px; background:#18201e; box-shadow:0 4px 16px #0004; color:#fff; }
+  .switcher button { width:33px; height:30px; border:0; border-radius:50%; background:transparent; color:#fff; cursor:pointer; font-size:19px; }
+  .switcher button:hover { background:#3c4b45; }
+  .switcher-output { min-width:178px; text-align:center; font-size:12px; font-weight:700; }
+  @media screen and (max-width:760px) { .page { transform:scale(.47); transform-origin:top center; margin-bottom:-157mm; } .stage { gap:2px; padding-left:0; padding-right:0; } }
+  @media print {
+    @page { size:A4 portrait; margin:0; }
+    body { background:#fff; }
+    .prototype-ui, .switcher { display:none !important; }
+    .stage { display:block; padding:0; }
+    .page { width:210mm; height:297mm; margin:0; box-shadow:none; transform:none; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+    .page:last-child { break-after:auto; page-break-after:auto; }
+  }
+</style>
+</head>
+<body>
+<section class="prototype-ui" aria-label="Prototype controls">
+  <p class="prototype-label">PROTOTYPE / fictional fixture / no publication</p>
+  <div class="controls">
+    <div class="control"><label for="language">Language</label><select id="language"><option value="fr">Français</option><option value="en">English</option></select></div>
+    <div class="control"><label for="scenario">Fixture</label><select id="scenario"><option value="short">Short, target one page</option><option value="long">Long, fixed multi-page</option></select></div>
+    <label class="check"><input id="registered" type="checkbox" checked> VAT registered</label>
+    <label class="check"><input id="logo" type="checkbox"> Fictional logo</label>
+    <label class="check"><input id="accent" type="checkbox" checked> Restrained accent</label>
+    <label class="check"><input id="signature" type="checkbox"> Customer signature area</label>
+  </div>
+  <details open><summary>Fixture and calculation audit</summary><div id="audit" class="audit-grid"></div><p>French and English fixtures are locally paired copy written for this prototype. Neither is a machine translation.</p></details>
+</section>
+<main id="stage" class="stage" aria-live="polite"></main>
+<nav class="switcher" aria-label="Choose prototype layout"><button id="previous" aria-label="Previous layout">←</button><output id="switcher-output" class="switcher-output"></output><button id="next" aria-label="Next layout">→</button></nav>
+<script>
+/* Three structurally distinct A4 Quote PDF layouts for issue #14, switchable with ?variant=A, B, or C. */
+(() => {
+  const copy = {
+    fr: {
+      quote:'DEVIS', business:'Atelier Pin Sàrl', businessDetail:'Menuiserie intérieure · Rue des Ateliers 8 · 1000 Lausanne · +41 21 555 01 14 · bonjour@atelier-pin.example',
+      vatId:'CHE-999.123.456 TVA', customerLabel:'CLIENT', businessLabel:'ENTREPRISE', projectLabel:'PROJET ET PORTÉE',
+      customer:['Camille Renaud', 'Maison du Lac SA', 'Chemin des Tilleuls 14', '1095 Lutry'],
+      project:'Rénovation du séjour et bibliothèque sur mesure', scope:'Préparation, isolation localisée, plafond, mobilier mural et finitions du séjour. Les travaux électriques sont hors du présent devis.',
+      currency:'Tous les montants sont en CHF', number:'Devis EQ-2026-014', revision:'Révision 02', date:'Publié le 14 octobre 2026', validity:'Valable jusqu’au 13 novembre 2026',
+      headings:{num:'Pos.', description:'Désignation', unit:'Unité', quantity:'Quantité', unitPrice:'Prix unit.', amount:'Montant'},
+      priced:'position chiffrée', included:'compris, sans prix', optional:'option, non comprise dans le total', excluded:'non compris', continued:'Détail technique, suite de la position',
+      sections:['Préparation et protection', 'Plafond et isolation', 'Mobilier et finitions', 'Options et exclusions'],
+      lines:[
+        ['Installation, protection et dépose ciblée', 'forfait', '1', 1250, 'Protection des sols, isolement de la zone de travail et dépose des éléments gênants.', 'priced'],
+        ['Isolation et pare-vapeur localisés', 'm²', '38.5', 83, 'Fourniture et pose entre ossature existante, joints et raccords compris.', 'priced'],
+        ['Ossature de plafond contre-lattée', 'm²', '55', 71, 'Contre-lattage, réglage des niveaux et supports nécessaires au plafond fini.', 'priced'],
+        ['Bibliothèque basse en chêne huilé', 'pièce', '4', 620, 'Modules ouverts, tablettes réglables et plinthes de finition sur le mur du séjour.', 'priced'],
+        ['Pose, réglage et finitions', 'h', '58', 82, 'Montage, ajustage, joints périphériques et nettoyage de fin de chantier.', 'priced'],
+        ['Protection des éléments conservés', '—', '—', null, 'Protections déposées en fin de chantier. Cette prestation est comprise sans prix propre.', 'included'],
+        ['Éclairage intégré de la bibliothèque', 'forfait', '1', 3680, 'Option: profil LED, alimentation et coordination de pose.', 'optional'],
+        ['Adaptation du tableau électrique', '—', '—', null, 'À traiter par un électricien mandaté par le client.', 'excluded']
+      ],
+      longLines:[
+        'Protection complète des passages conservés, pose de panneaux de protection et dépose manuelle des habillages qui empêchent le relevé. Les matériaux déposés restent triés sur place avant évacuation.',
+        'Isolation en fibre de bois avec pare-vapeur raccordé aux surfaces accessibles. Les raccords sont réalisés après contrôle visuel du support existant et avant fermeture du plafond.',
+        'Ossature contre-lattée réglée au laser. Cette position comprend les cales et fixations usuelles, sans correction d’un défaut structurel caché dans le support.',
+        'Bibliothèque composée de quatre modules fixes en chêne huilé. Les dimensions finales suivent le relevé réalisé avant commande.|Le chêne huilé reçoit une finition mate, teinte naturelle. Les variations de veinage, de teinte et de noeuds font partie du matériau. Les chants visibles reçoivent la même finition. Un échantillon est soumis avant commande. La bibliothèque est posée sur un support sec et stable. Les points de fixation suivent le relevé du support. Toute cavité, conduite ou faiblesse découverte après ouverture est signalée avant intervention. Références de chantier: relevé du 7 octobre 2026, croquis AP-14-B et échantillon chêne EO-2.',
+        'La pose comprend l’assemblage dans la pièce, le réglage des ouvrants s’il y en a et la reprise locale des joints. Le nettoyage enlève les protections et les chutes de pose.',
+        'Protections déposées en fin de chantier. Cette prestation est comprise sans prix propre.',
+        'Option distincte et non totalisée. Le prix couvre les profils LED et leur pose, mais pas le raccordement au tableau électrique ni la certification par un électricien.',
+        'Exclu du devis. Toute adaptation du tableau, ajout de circuit ou mise en conformité électrique doit faire l’objet d’une offre séparée de l’électricien du client.'
+      ],
+      subtotal:'Sous-total des positions comprises', discount:'Rabais de coordination', vat:'TVA 8,1 %', total:'Total TTC', netTotal:'Total', vatNo:'Entreprise non assujettie à la TVA',
+      termsTitle:'Paiement et acceptation', terms:[
+        '<strong>Acceptation.</strong> Retourner ce devis daté et signé par e-mail avant le début des travaux. L’acceptation confirme la portée, le prix et les exclusions.',
+        '<strong>Paiement.</strong> 40 % à l’acceptation, 50 % après pose du mobilier et 10 % à la réception. Paiement à 15 jours, sans escompte.',
+        '<strong>Engagement de prix.</strong> Les prix fixes, ainsi que les quantités multipliées par les prix unitaires, composent le prix proposé pour la portée décrite. Ils ne donnent pas lieu à un mesurage final. Toute modification acceptée fait l’objet d’un écrit.',
+        '<strong>Planning et accès.</strong> Le client assure l’accès aux pièces aux dates convenues et protège les objets non déplacés. Les délais dépendent de la disponibilité des matériaux.'
+      ],
+      continuation:'Suite du devis et des descriptions techniques', summary:'Résumé de la proposition', scopeTitle:'Portée retenue', includedTitle:'Compris dans le prix', optionTitle:'Option séparée', exclusionsTitle:'Exclusions', costing:'Chiffrage détaillé', signatureTitle:'Bon pour accord, lieu, date et signature du client', pages:'page'
+    },
+    en: {
+      quote:'QUOTE', business:'Atelier Pin Sàrl', businessDetail:'Interior carpentry · Rue des Ateliers 8 · 1000 Lausanne · +41 21 555 01 14 · bonjour@atelier-pin.example',
+      vatId:'CHE-999.123.456 VAT', customerLabel:'CUSTOMER', businessLabel:'BUSINESS', projectLabel:'PROJECT AND SCOPE',
+      customer:['Camille Renaud', 'Maison du Lac SA', 'Chemin des Tilleuls 14', '1095 Lutry'],
+      project:'Living room renovation and fitted bookcase', scope:'Preparation, local insulation, ceiling work, wall furniture and finishing in the living room. Electrical work is outside this quote.',
+      currency:'All amounts in CHF', number:'Quote EQ-2026-014', revision:'Revision 02', date:'Published 14 October 2026', validity:'Valid through 13 November 2026',
+      headings:{num:'Item', description:'Description', unit:'Unit', quantity:'Quantity', unitPrice:'Unit price', amount:'Amount'},
+      priced:'priced item', included:'included, no separate price', optional:'optional, not included in total', excluded:'excluded', continued:'Technical detail, continued from item',
+      sections:['Preparation and protection', 'Ceiling and insulation', 'Furniture and finishing', 'Options and exclusions'],
+      lines:[
+        ['Site setup, protection and selective removal', 'fixed', '1', 1250, 'Floor protection, work-zone separation and removal of obstructing elements.', 'priced'],
+        ['Local insulation and vapour barrier', 'm²', '38.5', 83, 'Supply and installation within the existing frame, including joints and connections.', 'priced'],
+        ['Counter-battened ceiling frame', 'm²', '55', 71, 'Counter-battens, level adjustment and supports needed for the finished ceiling.', 'priced'],
+        ['Oiled oak low bookcase', 'item', '4', 620, 'Open modules, adjustable shelves and finishing skirting along the living room wall.', 'priced'],
+        ['Installation, adjustment and finishing', 'h', '58', 82, 'Assembly, adjustment, perimeter joints and end-of-site clean-up.', 'priced'],
+        ['Protection of retained elements', '—', '—', null, 'Protection removed at the end of the work. This item is included with no separate price.', 'included'],
+        ['Integrated bookcase lighting', 'fixed', '1', 3680, 'Optional LED profile, power supply and installation coordination.', 'optional'],
+        ['Electrical-panel adaptation', '—', '—', null, 'To be handled by an electrician appointed by the customer.', 'excluded']
+      ],
+      longLines:[
+        'Full protection of retained routes, installation of protective boards and hand removal of linings that prevent measurement. Removed material stays sorted on site before disposal.',
+        'Wood-fibre insulation with vapour barrier connected to accessible surfaces. Connections are made after a visual check of the existing support and before closing the ceiling.',
+        'Laser-levelled counter-batten frame. This item includes normal packers and fixings, but not correction of a hidden structural defect in the support.',
+        'Bookcase made from four fixed modules in oiled oak. Final dimensions follow the survey completed before ordering.|The oiled oak has a natural matt finish. Grain, colour and knot variation are part of the material. Visible edges receive the same finish. A sample is approved before ordering. The bookcase is installed on a dry, stable support. Fixing points follow the support survey. Any void, service or weakness found after opening is reported before work continues. Site references: survey dated 7 October 2026, sketch AP-14-B and oak sample EO-2.',
+        'Installation includes assembly in the room, adjustment of any doors and local joint finishing. Clean-up removes the protection and installation offcuts.',
+        'Protection removed at the end of the work. This item is included with no separate price.',
+        'Separate optional item and not included in the total. The price covers LED profiles and installation, not connection to the electrical panel or certification by an electrician.',
+        'Excluded from this quote. Any panel adaptation, new circuit or electrical compliance work needs a separate offer from the customer’s electrician.'
+      ],
+      subtotal:'Included-line subtotal', discount:'Coordination discount', vat:'VAT 8.1%', total:'Total incl. VAT', netTotal:'Total', vatNo:'Business not registered for VAT',
+      termsTitle:'Payment and acceptance', terms:[
+        '<strong>Acceptance.</strong> Return this quote dated and signed by email before work starts. Acceptance confirms the scope, price and exclusions.',
+        '<strong>Payment.</strong> 40% on acceptance, 50% after furniture installation and 10% on handover. Payment is due in 15 days. No early-payment discount applies.',
+        '<strong>Price commitment.</strong> Fixed prices and quantities multiplied by unit prices make up the proposed price for the stated scope. They are not billed from a final measurement. Any approved change needs written agreement.',
+        '<strong>Programme and access.</strong> The customer provides access to the rooms on agreed dates and protects items not moved. Timing depends on material availability.'
+      ],
+      continuation:'Quote continuation and technical descriptions', summary:'Proposal at a glance', scopeTitle:'Agreed scope', includedTitle:'Included in the price', optionTitle:'Separate option', exclusionsTitle:'Exclusions', costing:'Detailed costing', signatureTitle:'Accepted by customer, place, date and signature', pages:'page'
+    }
+  };
+
+  const variants = { A:'Compact table', B:'Summary first', C:'Technical sections' };
+  const qs = new URLSearchParams(location.search);
+  let state = { variant: ['A','B','C'].includes(qs.get('variant')) ? qs.get('variant') : 'A', language:'fr', scenario:'short', registered:true, logo:false, accent:true, signature:false };
+  const numericMoney = n => n.toLocaleString('de-CH', {minimumFractionDigits:2, maximumFractionDigits:2}).replace(/'/g, '’');
+  const money = n => `CHF ${numericMoney(n)}`;
+  const fixtureIds = () => state.scenario === 'short' ? [0,3,4,5,6,7] : [0,1,2,3,4,5,6,7];
+  const values = () => {
+    const c = {...copy[state.language]}; const ids = fixtureIds();
+    if (state.scenario === 'short') {
+      c.scope = state.language === 'fr' ? 'Préparation, bibliothèque sur mesure et finitions du séjour. Travaux électriques exclus.' : 'Preparation, fitted bookcase and living room finishing. Electrical work excluded.';
+      c.terms = state.language === 'fr' ? [
+        '<strong>Acceptation.</strong> Confirmer par e-mail avant la date de validité, en citant le numéro et la révision du devis.',
+        '<strong>Paiement.</strong> 40 % à l’acceptation, solde à la réception, payable à 15 jours, sans escompte.',
+        '<strong>Prix forfaitaire.</strong> Le total couvre la portée décrite, sans mesurage final. Toute modification requiert un accord écrit.'
+      ] : [
+        '<strong>Acceptance.</strong> Confirm by email before the validity deadline, quoting the Quote number and revision.',
+        '<strong>Payment.</strong> 40% on acceptance, balance on handover, payable within 15 days, no early-payment discount.',
+        '<strong>Fixed price.</strong> The total covers the stated scope with no final measurement. Any change requires written agreement.'
+      ];
+    }
+    const amounts = c.lines.map(line => line[3] === null ? null : Number(line[2]) * line[3]);
+    const subtotal = ids.filter(i => c.lines[i][5] === 'priced').reduce((sum, i) => sum + amounts[i], 0);
+    const discount = state.scenario === 'short' ? 420 : 780;
+    const taxable = subtotal - discount;
+    const vat = Math.round(taxable * .081 * 100) / 100;
+    return { c, ids, amounts, subtotal, discount, taxable, vat, grand: state.registered ? taxable + vat : taxable };
+  };
+  const esc = text => String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const lineNumber = (index, v) => v.ids.indexOf(index) + 1;
+  const numberedLine = (index, v, long=false) => {
+    const {c, amounts} = v; const line = c.lines[index]; const kind = line[5];
+    const description = long ? c.longLines[index].split('|')[0] : line[4];
+    const hasPrice = kind === 'priced' || kind === 'optional';
+    const rate = hasPrice ? numericMoney(line[3]) : '—';
+    const amount = hasPrice ? numericMoney(amounts[index]) : '—';
+    return `<tr class="${kind}-row"><td class="n">${lineNumber(index,v)}</td><td><span class="line-title">${esc(line[0])}</span><span class="line-detail">${esc(description)}</span><span class="status">${c[kind]}</span></td><td class="unit">${esc(line[1])}</td><td class="qty">${esc(line[2])}</td><td class="rate">${rate}</td><td class="amount">${amount}</td></tr>`;
+  };
+  const continuedLine = (index, v) => {
+    const detail = v.c.longLines[index].split('|')[1]; if (!detail) return '';
+    const no = lineNumber(index,v);
+    return `<tr class="continued-row"><td class="n">${no}</td><td colspan="5"><span class="line-title">${v.c.continued} ${no}</span><span class="line-detail">${esc(detail)}</span></td></tr>`;
+  };
+  const tableHead = c => `<thead><tr><th class="n">${c.headings.num}</th><th>${c.headings.description}</th><th class="unit">${c.headings.unit}</th><th class="qty">${c.headings.quantity}</th><th class="rate">${c.headings.unitPrice}</th><th class="amount">${c.headings.amount}</th></tr></thead>`;
+  const rows = (ids, v, long=false, sections=false, continuations=[]) => {
+    const {c} = v; let out = continuations.map(i => continuedLine(i, v)).join('');
+    const sectionAt = {0:0, 1:1, 3:2, 6:3};
+    ids.forEach(i => {
+      if (sections && sectionAt[i] !== undefined) out += `<tr class="section-row"><td colspan="6">${c.sections[sectionAt[i]]}</td></tr>`;
+      out += numberedLine(i, v, long);
+    });
+    return out;
+  };
+  const table = (ids, v, long=false, sections=false, continuations=[]) => `<p class="currency">${v.c.currency}</p><table>${tableHead(v.c)}<tbody>${rows(ids, v, long, sections, continuations)}</tbody></table>`;
+  const docHead = (v, page, pages) => { const {c} = v; return `<header class="doc-top"><div class="brand"><div class="brand-mark">AP</div><div><div class="business-name">${c.business}</div><div class="business-detail">${c.businessDetail}${state.registered ? ` · ${c.vatId}` : ''}</div></div></div><div class="document-id"><strong>${c.number}</strong><span>${c.revision}</span><span>${c.date}</span><span>${c.validity}</span></div></header>`; };
+  const footer = (v, page, pages) => `<footer class="footer"><span>${v.c.number} · ${v.c.revision}</span><span>${v.c.pages} ${page} / ${pages}</span></footer>`;
+  const page = (content, v, current, pages) => `<article class="page document layout-${state.variant} ${state.logo ? 'with-logo' : ''}">${docHead(v,current,pages)}${content}${footer(v,current,pages)}</article>`;
+  const parties = v => { const {c} = v; return `<div class="identity-grid"><section><p class="eyebrow">${c.businessLabel}</p><address>${c.business}<br>Rue des Ateliers 8<br>1000 Lausanne</address></section><section><p class="eyebrow">${c.customerLabel}</p><address>${c.customer.join('<br>')}</address></section></div>`; };
+  const identity = v => { const {c} = v;
+    if(state.variant==='A')return `<div class="doc-type"><h1>${c.quote}</h1><span class="currency">${c.currency}</span></div><div class="identity-grid"><section><p class="eyebrow">${c.customerLabel}</p><address>${c.customer.join('<br>')}</address></section><section><p class="eyebrow">${c.projectLabel}</p><strong>${c.project}</strong><p>${c.scope}</p></section></div>`;
+    return `<div class="doc-type"><h1>${c.quote}</h1><span class="currency">${c.currency}</span></div>${parties(v)}<section class="project"><strong>${c.projectLabel}</strong><p>${c.project}</p><p>${c.scope}</p></section>`; };
+  const totals = v => { const {c,subtotal,discount,taxable,vat,grand} = v; return `<table class="totals"><tbody><tr><td>${c.subtotal}</td><td>${money(subtotal)}</td></tr><tr class="discount"><td>${c.discount}</td><td>− ${money(discount)}</td></tr><tr><td>${state.registered ? c.vat : ''}</td><td>${state.registered ? money(vat) : ''}</td></tr><tr class="grand"><td>${state.registered ? c.total : c.netTotal}</td><td>${money(grand)}</td></tr></tbody></table>${state.registered ? `<p class="vat-note">${c.vatId}</p>` : `<p class="vat-note">${c.vatNo}</p>`}`; };
+  const terms = v => `<section class="terms"><h2>${v.c.termsTitle}</h2><div class="terms-columns">${v.c.terms.map(p => `<p>${p}</p>`).join('')}</div>${state.signature ? `<div class="signature"><p>${v.c.signatureTitle}</p><div class="signature-line"></div></div>` : ''}</section>`;
+  // Long technical detail stays attached to its numbered line. continuedLine() places its second part on the next fixed page.
+  const compact = v => {
+    if (state.scenario === 'short') return [page(`${identity(v)}${table(v.ids,v,false,false)}${totals(v)}${terms(v)}`,v,1,1)];
+    return [
+      page(`${identity(v)}${table([0,1,2,3],v,true,true)}`,v,1,2),
+      page(`<p class="continuation">${v.c.continuation}</p>${table([4,5,6,7],v,true,true,[3])}${totals(v)}${terms(v)}`,v,2,2)
+    ];
+  };
+  const summary = v => {
+    const {c,grand} = v;
+    const first = `<section class="summary-hero"><p class="eyebrow">${c.summary}</p><h1>${c.quote}</h1><p>${c.project}</p><p>${c.scope}</p></section>${parties(v)}<div class="compact-meta"><span>${c.number} · ${c.revision}</span><span>${c.validity}</span></div><section class="price-callout"><div><p class="eyebrow">${state.registered ? c.total : c.netTotal}</p><p>${c.subtotal}: ${money(v.subtotal)}<br>${c.discount}: − ${money(v.discount)}${state.registered ? `<br>${c.vat}: ${money(v.vat)}` : ''}</p></div><strong>${money(grand)}</strong></section>`;
+    if (state.scenario === 'short') return [page(`${first}${terms(v)}`,v,1,2),page(`<p class="continuation">${c.costing}</p>${table(v.ids,v,false,true)}${totals(v)}`,v,2,2)];
+    return [page(`${first}${terms(v)}`,v,1,3),page(`<p class="continuation">${c.costing}</p>${table([0,1,2,3],v,true,true)}`,v,2,3),page(`<p class="continuation">${c.costing}</p>${table([4,5,6,7],v,true,true,[3])}${totals(v)}`,v,3,3)];
+  };
+  const blocks = (ids,v,continuation=false) => {
+    const c=v.c;
+    let html=continuation ? `<section class="line-block"><p class="continued">${c.continued} ${lineNumber(3,v)}</p><p>${esc(c.longLines[3].split('|')[1])}</p></section>` : '';
+    const sectionAt={0:0,1:1,3:2,6:3};
+    for(const i of ids){
+      const line=c.lines[i], kind=line[5], priced=kind==='priced'||kind==='optional';
+      if(sectionAt[i]!==undefined)html+=`<h2 class="section-title">${c.sections[sectionAt[i]]}</h2>`;
+      html+=`<section class="line-block"><h3>${lineNumber(i,v)}. ${esc(line[0])}</h3><p>${esc(state.scenario==='long'?c.longLines[i].split('|')[0]:line[4])}</p><div class="commercial"><span>${priced?`${line[2]} ${line[1]} × ${money(line[3])}`:c[kind]}</span><strong>${priced?money(v.amounts[i]):''}</strong></div>${kind==='optional'?`<span class="status">${c.optional}</span>`:''}</section>`;
+    }
+    return html;
+  };
+  const technicalLayout = v => {
+    const {c} = v;
+    if (state.scenario === 'short') return [
+      page(`${identity(v)}${blocks([0,3,4],v)}`,v,1,2),
+      page(`<p class="continuation">${c.continuation}</p>${blocks([5,6,7],v)}${totals(v)}${terms(v)}`,v,2,2)
+    ];
+    return [
+      page(`${identity(v)}${blocks([0,1,2,3],v)}`,v,1,3),
+      page(`<p class="continuation">${c.continuation}</p>${blocks([4,5],v,true)}`,v,2,3),
+      page(`<p class="continuation">${c.continuation}</p>${blocks([6,7],v)}${totals(v)}${terms(v)}`,v,3,3)
+    ];
+  };
+  function updateUrl() { const p = new URLSearchParams(location.search); p.set('variant',state.variant); history.replaceState(null,'',`${location.pathname}?${p}`); }
+  function render() {
+    const v = values(); document.documentElement.lang = state.language;
+    document.documentElement.style.setProperty('--accent', state.accent ? '#4b6b58' : '#667177');
+    document.documentElement.style.setProperty('--section', state.accent ? '#3d4942' : '#20262a');
+    const pages = state.variant === 'A' ? compact(v) : state.variant === 'B' ? summary(v) : technicalLayout(v);
+    document.getElementById('stage').innerHTML = pages.join('');
+    document.getElementById('switcher-output').textContent = `${state.variant} · ${variants[state.variant]}`;
+    document.getElementById('audit').innerHTML = `<p><strong>Layout</strong><br>${state.variant} · ${variants[state.variant]}<br>${pages.length} fixed A4 page${pages.length > 1 ? 's' : ''}</p><p><strong>Fixture</strong><br>${state.scenario} · ${state.language === 'fr' ? 'French' : 'English'} copy<br>Same line data and prices in A, B and C</p><p><strong>Screen settings</strong><br>${state.registered ? 'VAT registered' : 'Not VAT registered'}<br>${state.logo ? 'Fictional logo on' : 'No logo'} · ${state.accent ? 'Accent on' : 'Grayscale'} · ${state.signature ? 'Signature area on' : 'No signature area'}</p><p><strong>Quote calculation</strong><br>${v.c.subtotal}: ${money(v.subtotal)}<br>${v.c.discount}: − ${money(v.discount)}<br>${state.registered ? `${v.c.vat}: ${money(v.vat)}<br>` : ''}<strong>${state.registered ? v.c.total : v.c.netTotal}: ${money(v.grand)}</strong></p><p><strong>Print rule</strong><br>Controls are screen-only. Browser print uses explicit A4 pages. This fixture has hand-set page breaks, not a production pagination engine.</p>`;
+  }
+  ['language','scenario','registered','logo','accent','signature'].forEach(id => document.getElementById(id).addEventListener('change', event => { state[id] = event.target.type === 'checkbox' ? event.target.checked : event.target.value; render(); }));
+  function cycle(offset) { const keys = Object.keys(variants); state.variant = keys[(keys.indexOf(state.variant) + offset + keys.length) % keys.length]; updateUrl(); render(); }
+  document.getElementById('previous').addEventListener('click', () => cycle(-1));
+  document.getElementById('next').addEventListener('click', () => cycle(1));
+  addEventListener('keydown', event => { const target = event.target; if (target.matches('input, textarea, select, [contenteditable]')) return; if (event.key === 'ArrowLeft') { event.preventDefault(); cycle(-1); } if (event.key === 'ArrowRight') { event.preventDefault(); cycle(1); } });
+  render();
+})();
+</script>
+</body>
+</html>
