@@ -1,6 +1,6 @@
 # Quote PDF standard prototype
 
-Throwaway comparison for [Decide the Quote PDF content and visual standard](https://github.com/lbise/easy-quote/issues/14). No layout has been selected yet. All Business, Customer, scope, pricing and commercial terms are fictional review fixtures, not recommended legal wording.
+Throwaway comparison for [Decide the Quote PDF content and visual standard](https://github.com/lbise/easy-quote/issues/14). The Artisan approved A, Compact, and C, Section-led, as per-Quote choices. B remains here only as comparison evidence. See the [resolution](https://github.com/lbise/easy-quote/issues/14#issuecomment-5570884534) for defaults, Preview selection and publication rules. All Business, Customer, scope, pricing and commercial terms are fictional review fixtures, not recommended legal wording.
 
 ## Open the comparison
 
@@ -38,4 +38,4 @@ First-page previews: [A](quote-pdf-samples/A-fr-short.png), [B](quote-pdf-sample
 - Browser print samples are review evidence, not a selected production renderer. Pagination uses fixture-specific page breaks and does not establish arbitrary-content pagination correctness, accessibility conformance, physical printer quality or other-browser support.
 - The short fixture has six lines, the long fixture eight. Included, optional and excluded lines remain visible but do not enter the fixed total. Long bookcase details explicitly continue under the original line number.
 
-Review the hierarchy, readability and page count before choosing a layout or combining parts. The ticket stays open pending the human verdict and remaining content/layout decisions.
+The ticket is resolved. Keep this comparison on the throwaway branch as evidence; it is not the application implementation. The hand-set page breaks are illustrative, not approved fixed page counts.
