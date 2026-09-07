@@ -55,3 +55,7 @@ _Avoid_: Finalized Quote, release, customer version
 **Quote PDF**:
 The customer-ready PDF representation of a Quote Revision.
 _Avoid_: Printout, report
+
+**Quote Layout**:
+The presentation style chosen for a Quote's customer-facing document, without changing its commercial content.
+_Avoid_: Quote type, document designer
